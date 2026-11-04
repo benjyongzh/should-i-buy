@@ -1,0 +1,1 @@
+The worker's importable entry point is `backend/app/worker.py` so API and worker share exactly the same pinned simulation package. Run `python -m app.worker` from backend, or use the Compose `worker` service. Each process executes one run at a time. `--once` is useful for diagnostics/tests. No simulation runs in the HTTP server process.

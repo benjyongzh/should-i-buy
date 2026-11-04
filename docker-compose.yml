@@ -1,0 +1,62 @@
+name: trading-lab
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: backend/Dockerfile
+  env_file: .env
+  environment:
+    DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://trading_lab:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/trading_lab}
+  init: true
+  restart: unless-stopped
+  mem_limit: 1g
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: trading_lab
+      POSTGRES_USER: trading_lab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U trading_lab -d trading_lab"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    <<: *backend
+    command: [python, -m, alembic, upgrade, head]
+    restart: "no"
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    <<: *backend
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  worker:
+    <<: *backend
+    command: [python, -m, app.worker]
+    cpus: 1
+    mem_limit: 2g
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports: ["127.0.0.1:${WEB_PORT:-8080}:80"]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://127.0.0.1/]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+volumes:
+  postgres_data:
