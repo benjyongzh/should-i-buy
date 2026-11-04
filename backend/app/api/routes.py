@@ -1,5 +1,6 @@
 from collections.abc import Collection
 from datetime import UTC, date, datetime
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import Field
@@ -300,18 +301,21 @@ class ProviderImport(StrictModel):
     symbols: list[Symbol] = Field(min_length=1, max_length=20)
     start: date
     end: date
+    feed: Literal["iex", "sip"] = "iex"
     fx: list[FXObservation] = Field(default_factory=list, max_length=30_000)
     fx_csv: str = Field(default="", max_length=3_000_000)
     actions_csv: str = Field(default="", max_length=1_000_000)
     corporate_actions_reviewed: bool = False
+    dividends_complete: bool = False
 
 
 @router.post("/market-data/alpaca", status_code=201)
 def alpaca(body: ProviderImport, db: Session = Depends(get_db)) -> dict:
     if body.start > body.end or (body.end - body.start).days > 1827:
         raise ValueError("Alpaca import must span between 0 and 1827 days")
-    data = AlpacaProvider().fetch(body.symbols, body.start, body.end)
+    data = AlpacaProvider().fetch(body.symbols, body.start, body.end, feed=body.feed)
     data.corporate_actions_reviewed = body.corporate_actions_reviewed
+    data.dividends_complete = body.dividends_complete
     data.fx = (
         body.fx + [FXObservation.model_validate(r) for r in csv_records(body.fx_csv)]
         if body.fx_csv

@@ -3,7 +3,7 @@ import io
 import time
 from datetime import UTC, date, datetime, timedelta
 from datetime import time as day_time
-from typing import Protocol
+from typing import Literal, Protocol
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -32,9 +32,13 @@ def csv_records(content: str) -> list[dict]:
 
 
 class AlpacaProvider:
-    """Read-only, raw daily IEX bars. No brokerage endpoint exists in this adapter."""
+    """Read-only, raw daily bars. No brokerage endpoint exists in this adapter."""
 
-    def fetch(self, symbols: list[str], start: date, end: date) -> DatasetInput:
+    def fetch(
+        self, symbols: list[str], start: date, end: date, *, feed: Literal["iex", "sip"] = "iex"
+    ) -> DatasetInput:
+        if feed not in ("iex", "sip"):
+            raise ValueError("Alpaca feed must be iex or sip")
         config = settings()
         if (
             not config.alpaca_api_key.get_secret_value()
@@ -51,7 +55,7 @@ class AlpacaProvider:
             "end": str(end + timedelta(days=1)),
             "timeframe": "1Day",
             "adjustment": "raw",
-            "feed": "iex",
+            "feed": feed,
             "asof": "-",
             "limit": 10000,
             "sort": "asc",
@@ -117,9 +121,9 @@ class AlpacaProvider:
             else:
                 raise ValueError("Alpaca pagination limit exceeded; use a smaller import")
         return DatasetInput(
-            name=f"Alpaca IEX {start}–{end}",
-            provider="alpaca-iex",
+            name=f"Alpaca {feed.upper()} {start}–{end}",
+            provider=f"alpaca-{feed}",
             decision_time="20:30_America/New_York",
             bars=bars,
-            availability_policy="Assumed 20:15 America/New_York availability after extended-hours volume; decisions 20:30. Current revised bars, not publication vintages. IEX feed; not official auction prices. FX/actions require separate source inputs.",
+            availability_policy=f"Assumed 20:15 America/New_York availability after extended-hours volume; decisions 20:30. Current revised bars, not publication vintages. {feed.upper()} feed; not official auction prices. FX/actions require separate source inputs.",
         )

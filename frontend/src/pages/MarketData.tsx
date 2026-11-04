@@ -19,6 +19,7 @@ export function MarketData() {
   const [decisionTime, setDecisionTime] = useState('close_plus_30m')
   const [message, setMessage] = useState('')
   const [symbols, setSymbols] = useState('SPY')
+  const [feed, setFeed] = useState('sip')
   const [start, setStart] = useState('2018-01-01')
   const [end, setEnd] = useState('2022-12-31')
   const [error, setError] = useState<unknown>(null)
@@ -46,9 +47,11 @@ export function MarketData() {
         symbols: symbols.split(',').map((s) => s.trim().toUpperCase()),
         start,
         end,
+        feed,
         fx_csv: fx,
         actions_csv: actions,
         corporate_actions_reviewed: reviewed,
+        dividends_complete: complete,
       }),
     onSuccess: async (d) => {
       await qc.invalidateQueries({ queryKey: ['datasets'] })
@@ -259,11 +262,17 @@ export function MarketData() {
           >
             <Panel title="Fetch Alpaca historical bars">
               <p className="muted">
-                Uses server-side data credentials and the IEX feed. Raw, unadjusted daily prices; no
-                brokerage execution. Completed volume is available at an assumed 20:15 New York
-                time, with decisions at 20:30. Current revised history is not publication-vintage
-                data.
+                Uses server-side data credentials and your selected feed. Raw, unadjusted daily
+                prices; no brokerage execution. Completed volume is available at an assumed 20:15
+                New York time, with decisions at 20:30. Current revised history is not
+                publication-vintage data.
               </p>
+              <Field label="Alpaca feed">
+                <select value={feed} onChange={(e) => setFeed(e.target.value)}>
+                  <option value="sip">SIP — consolidated US market</option>
+                  <option value="iex">IEX — single exchange</option>
+                </select>
+              </Field>
               <Field label="Symbols">
                 <input required value={symbols} onChange={(e) => setSymbols(e.target.value)} />
               </Field>
@@ -310,6 +319,14 @@ export function MarketData() {
                   onChange={(e) => setReviewed(e.target.checked)}
                 />{' '}
                 I reviewed corporate-action coverage and supplied all effective splits
+              </label>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={complete}
+                  onChange={(e) => setComplete(e.target.checked)}
+                />{' '}
+                Source attests complete dividend history
               </label>
               <button className="secondary" disabled={fetchData.isPending}>
                 {fetchData.isPending ? 'Fetching…' : 'Fetch historical bars'}

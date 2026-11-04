@@ -304,3 +304,29 @@ it('loads a labeled demonstration only on explicit request', async () => {
   await user.click(screen.getByRole('button', { name: 'Load labeled synthetic dataset' }))
   await waitFor(() => expect(mock.api).toHaveBeenCalledWith('/market-data/demo', 'POST'))
 })
+
+it('imports the selected Alpaca feed and explicit dividend attestation', async () => {
+  const user = userEvent.setup()
+  mock.api.mockResolvedValue({ name: 'Mock import', content_hash: 'abc123' })
+  wrap(<MarketData />)
+  expect(screen.getByLabelText('Alpaca feed')).toHaveValue('sip')
+  await user.selectOptions(screen.getByLabelText('Alpaca feed'), 'iex')
+  await user.click(
+    screen.getAllByRole('checkbox', { name: 'Source attests complete dividend history' })[1],
+  )
+  await user.click(screen.getByRole('button', { name: 'Fetch historical bars' }))
+  await waitFor(() =>
+    expect(mock.api).toHaveBeenCalledWith(
+      '/market-data/alpaca',
+      'POST',
+      expect.objectContaining({
+        feed: 'iex',
+        symbols: ['SPY'],
+        start: '2018-01-01',
+        end: '2022-12-31',
+        dividends_complete: true,
+        corporate_actions_reviewed: false,
+      }),
+    ),
+  )
+})

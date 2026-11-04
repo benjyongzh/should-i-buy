@@ -45,11 +45,11 @@ Open [localhost:8080](http://localhost:8080). Compose runs PostgreSQL, a one-sho
 
 To use an existing PostgreSQL instance, set `DATABASE_URL` and use `docker compose -f compose.external.yml up --build -d`; the external configuration has no bundled database. Percent-encode reserved characters in connection URLs. Restrict access through an authenticated reverse proxy or trusted VPN before allowing non-local access. This MVP intentionally has no account/login system.
 
-Docker is not installed on the development host, so container build/start verification remains outstanding. Native PostgreSQL 16 migrations, rollback/reapply, immutability triggers and concurrent claiming were tested.
+Docker Desktop with the WSL 2 Linux engine has now been verified on Windows: images build, migrations/health pass, the independent worker processes HTTP-submitted jobs, and stored data/results survive service restart and container recreation. The current 63-case backend suite passes in a disposable Linux container including PostgreSQL. The isolated test stack uses loopback port 18080 and its own volume; see the [Windows verification record and commands](docs/deployment-verification.md). Standalone Ubuntu/external-DB deployment remains unverified.
 
 ## First research workflow
 
-1. **Market data:** import raw daily OHLCV CSV plus USD/SGD FX and corporate actions as one immutable revision. Inspect coverage and provenance. For real raw data, review corporate-action history, supply all effective splits, and attest that review in the import form before scheduling. Alternatively configure server-side Alpaca keys; its read-only adapter fetches raw IEX daily bars. Missing credentials or coverage produce explicit errors.
+1. **Market data:** import raw daily OHLCV CSV plus USD/SGD FX and corporate actions as one immutable revision. Inspect coverage and provenance. For real raw data, review corporate-action history, supply all effective splits, and attest that review in the import form before scheduling. Alternatively configure server-side Alpaca keys; its read-only adapter fetches raw SIP or IEX daily bars (explicit selection; UI defaults to SIP). Missing credentials or coverage produce explicit errors.
 2. **Strategies:** create a strategy, choose a template or compose typed conditions, edit sizing/risk, validate, save the working draft, then publish a version. The advanced JSON editor uses the same backend schema.
 3. **Backtest profiles:** save capital, currency, dates, symbols, benchmark, fees, slippage and constraints. The standard defaults are SGD 10,000 and SGD 2.50 per executed order.
 4. **New backtest:** select one or more published versions, one profile and one dataset. Jobs execute in the separate worker. Synthetic datasets require explicit acknowledgment.
@@ -85,6 +85,8 @@ npm audit
 
 The Python lock records all transitive versions. Update `requirements.in`, resolve in a clean virtual environment, regenerate `requirements.lock`, and run the checks. Frontend resolution is pinned by `package-lock.json`.
 
+Automated tests require no market-data or LLM credentials. Backend tests clear inherited provider keys/model and block unmocked HTTPX requests; provider responses are controlled fixtures. See the [unit/integration coverage and isolation notes](docs/testing.md). Live credentialed smoke tests are separate from pytest.
+
 ## Architecture and feature status
 
 The mandatory [Milestone 3 correctness gate](docs/milestone-3-review.md) runs before strategy-editor work and after material engine changes. Independent review found and corrected five defects in engine 1.1.0. Use engine 1.2.0 for fresh runs; previously completed results retain their original assumptions and need to be rerun to apply corrections.
@@ -93,4 +95,6 @@ React/TypeScript/Vite/Tailwind + TanStack Query/Router/Recharts → FastAPI/Pyda
 
 See [architecture](docs/architecture.md), [data model](docs/data-model.md), [strategy DSL](docs/strategy-schema.md), [event ordering and accounting](docs/backtesting-engine.md), [data isolation](docs/point-in-time-data.md), [provider notes](docs/data-providers.md), [milestone verification](docs/verification.md), and [known limitations](docs/known-limitations.md).
 
-Implemented through the local synthetic MVP workflow. Remaining release verification: actual Docker deployment, credentialed provider/LLM calls, and the real 2019–2022 equity/FX/corporate-action scenario. No fabricated real-data returns or live trading are included.
+Implemented through the synthetic MVP workflow, including verified Docker Desktop deployment/persistence on Windows. Remaining release verification: credentialed provider/LLM calls and the real 2019–2022 equity/FX/corporate-action scenario. No fabricated real-data returns or live trading are included.
+
+The [deployment and real-data runbook](docs/deployment-verification.md) records current checks, credentials to configure locally, a free-first source plan and isolated Docker verification commands that avoid existing homelab databases and ports.

@@ -1,14 +1,35 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
 
+from app.core.config import settings
 from app.db.session import Base, get_db, make_engine
 from app.main import app
 from app.market_data.calendar import session_times, sessions
 from app.schemas.domain import Bar, DatasetInput, FXObservation
+
+
+@pytest.fixture(autouse=True)
+def isolate_external_providers(monkeypatch):
+    """Developer credentials must never enable live providers during automated tests."""
+    for variable in ("ALPACA_API_KEY", "ALPACA_SECRET_KEY", "LLM_API_KEY", "LLM_MODEL"):
+        monkeypatch.setenv(variable, "")
+    settings.cache_clear()
+
+    def blocked_request(*args, **kwargs):
+        raise AssertionError("Unmocked outbound HTTP is disabled in tests; use MockTransport")
+
+    async def blocked_async_request(*args, **kwargs):
+        blocked_request()
+
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", blocked_request)
+    monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", blocked_async_request)
+    yield
+    settings.cache_clear()
 
 
 def fixture_data(start=date(2020, 1, 2), end=date(2020, 6, 30), prices=None):

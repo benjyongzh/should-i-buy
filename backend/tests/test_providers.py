@@ -10,7 +10,8 @@ from app.market_data.validation import validate_dataset
 from app.market_data.view import DataView
 
 
-def test_alpaca_pagination_raw_iex_and_extended_volume_availability(monkeypatch):
+@pytest.mark.parametrize("feed", ["iex", "sip"])
+def test_alpaca_pagination_raw_feed_and_extended_volume_availability(monkeypatch, feed):
     requests = []
 
     def handle(request):
@@ -42,10 +43,12 @@ def test_alpaca_pagination_raw_iex_and_extended_volume_availability(monkeypatch)
         ),
     )
     monkeypatch.setattr(providers.time, "sleep", lambda _: None)
-    data = providers.AlpacaProvider().fetch(["SPY"], date(2019, 1, 2), date(2019, 1, 3))
+    data = providers.AlpacaProvider().fetch(["SPY"], date(2019, 1, 2), date(2019, 1, 3), feed=feed)
     assert len(data.bars) == 2 and len(requests) == 2
     assert requests[0].url.params["adjustment"] == "raw"
-    assert requests[0].url.params["feed"] == "iex"
+    assert requests[0].url.params["feed"] == feed
+    assert data.provider == f"alpaca-{feed}"
+    assert f"{feed.upper()} feed" in data.availability_policy
     assert requests[1].url.params["page_token"] == "next"
     assert requests[0].url.host == "data.alpaca.markets"
     assert data.decision_time == "20:30_America/New_York"
@@ -105,3 +108,53 @@ def test_provider_rejects_unfinished_daily_bar(monkeypatch):
     )
     with pytest.raises(ValueError, match="unfinished daily session"):
         providers.AlpacaProvider().fetch(["SPY"], date(2019, 1, 2), date(2019, 1, 2))
+
+
+def test_alpaca_import_retains_feed_actions_and_completeness(client, data, monkeypatch):
+    from app.api import routes
+    from app.schemas.domain import Action
+
+    feeds = []
+
+    def fetch(self, symbols, start, end, *, feed):
+        feeds.append(feed)
+        result = data.model_copy(deep=True)
+        result.provider = f"alpaca-{feed}"
+        return result
+
+    monkeypatch.setattr(routes.AlpacaProvider, "fetch", fetch)
+    action = Action(
+        symbol="SPY",
+        session_date=data.bars[1].session_date,
+        available_at=data.bars[0].available_at,
+        kind="dividend",
+        value="1.25",
+        payment_date=data.bars[2].session_date,
+    )
+    body = {
+        "symbols": ["SPY"],
+        "start": str(data.bars[0].session_date),
+        "end": str(data.bars[-1].session_date),
+        "feed": "sip",
+        "corporate_actions_reviewed": True,
+        "dividends_complete": True,
+        "actions_csv": "symbol,session_date,available_at,kind,value,payment_date\n"
+        + ",".join(
+            str(getattr(action, k))
+            for k in ["symbol", "session_date", "available_at", "kind", "value", "payment_date"]
+        ),
+    }
+    response = client.post("/api/market-data/alpaca", json=body)
+    assert response.status_code == 201, response.text
+    revision = response.json()
+    exported = client.get(f"/api/market-data/datasets/{revision['id']}/export").json()
+    assert feeds == ["sip"]
+    assert exported["provider"] == "alpaca-sip"
+    assert exported["corporate_actions_reviewed"] and exported["dividends_complete"]
+    assert exported["actions"] == [action.model_dump(mode="json")]
+    body["dividends_complete"] = False
+    second = client.post("/api/market-data/alpaca", json=body)
+    assert second.status_code == 201, second.text
+    assert second.json()["content_hash"] != revision["content_hash"]
+    body["feed"] = "unsupported"
+    assert client.post("/api/market-data/alpaca", json=body).status_code == 422
