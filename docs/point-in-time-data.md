@@ -1,6 +1,6 @@
 # Point-in-time data boundary
 
-The interpreter accepts only a materialized `DataView.history(symbol)` at the current simulation timestamp. The view filters availability timestamps on construction, and explicitly rejects requests through a future timestamp. The declarative interpreter has no reference to the dataset, provider, database, network or clock advancement mechanism.
+The interpreter accepts only a materialized `DataView.history(symbol)` at the current simulation timestamp. The view filters availability, source timestamps and the actual exchange-session completion time, including for historical `through` requests. Misdated availability cannot expose a future completed candle. Requests through a future timestamp are rejected. The simulator also revalidates dataset chronology at its entry boundary. The declarative interpreter has no reference to the dataset, provider, database, network or clock advancement mechanism.
 
 Market data contracts distinguish exchange session date, source timestamp, historical availability timestamp and ingestion time. Completed bars earlier than the official close are invalid. FX has a separate observation timestamp and publication timestamp. Selection requires both <= the execution/valuation clock; observations older than the profile limit (default seven days) fail. There is no current-FX substitution, backward fill or synthetic fallback.
 
@@ -11,5 +11,7 @@ Raw prices are immutable. Splits change quantities and reference prices at effec
 An API source's current revised history is not a vintage database. Alpaca imports explicitly disclose assumed 20:15 New York time publication and revised histories. Temporal gating cannot prove the vendor never revised earlier prices. Strict historical research requires source-provided vintage timestamps/data, corporate-action coverage and historical constituents. See provider/limitations documents.
 
 Tests cover future observation rejection, future-price/volume/FX mutation invariance, next-open fills, SMA warm-up, missing-session rejection, FX publication gating, unmatured ML labels, splits and reproducible replay. The 2019–2022 synthetic acceptance report independently verifies invariant signals, eligible fills and equity before 2020-06-30 after mutating all later data.
+
+The mandatory Milestone 3 review adds finer intraday invariance: modifying a session's final volume cannot change that morning's fill; modifying one asset's later low cannot change another asset's earlier opening gap exit, including under a one-order daily limit. Opening events precede every range-based close event. See `milestone-3-review.md` for the failed baseline and independently verified corrections.
 
 Future trainers must accept explicit label maturity timestamps and enforce <= training cutoff before preprocessing, feature selection or training. The included maturity guard is a boundary test, not an implemented ML training system. No modern LLM pretrained knowledge is used as a 2020 trading agent.

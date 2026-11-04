@@ -16,6 +16,16 @@ class Position:
     opened_session: int
 
 
+@dataclass(frozen=True)
+class ExecutionQuote:
+    price: Decimal
+    notional: Decimal
+    fee: Decimal
+    fx_cost: Decimal
+    slippage_cost: Decimal
+    cash_delta: Decimal
+
+
 class Ledger:
     def __init__(self, profile: ProfileConfig):
         self.profile = profile
@@ -42,6 +52,25 @@ class Ledger:
         quantum = D("0.000001") if p.fractional_shares else D(1)
         return affordable.quantize(quantum, rounding=ROUND_DOWN)
 
+    def quote(
+        self, side: str, quantity: Decimal, raw_price: Decimal, fx: Decimal
+    ) -> ExecutionQuote:
+        """Pure cost calculation shared by pre-trade risk checks and booked executions."""
+        if side not in {"buy", "sell"}:
+            raise ValueError("unsupported order side")
+        for name, value in (("quantity", quantity), ("price", raw_price), ("FX rate", fx)):
+            if not value.is_finite() or value <= 0:
+                raise ValueError(f"{name} must be finite and positive")
+        p = self.profile
+        price = raw_price * (1 + (p.slippage + p.spread / 2) * (1 if side == "buy" else -1))
+        notional = quantity * price * fx
+        fee = p.fixed_fee + notional * p.commission_pct
+        fx_cost = notional * p.fx_markup if p.account_currency != "USD" else D(0)
+        cash_delta = -(notional + fee + fx_cost) if side == "buy" else notional - fee - fx_cost
+        return ExecutionQuote(
+            price, notional, fee, fx_cost, abs(price - raw_price) * quantity * fx, cash_delta
+        )
+
     def execute(
         self,
         symbol: str,
@@ -53,8 +82,7 @@ class Ledger:
         session_index: int,
     ) -> dict:
         p = self.profile
-        if quantity <= 0:
-            raise ValueError("quantity rounds to zero")
+        quote = self.quote(side, quantity, raw_price, fx)
         if side == "buy" and not p.fractional_shares and quantity != quantity.to_integral_value():
             raise ValueError("fractional order is disabled")
         if side == "buy" and symbol in self.positions:
@@ -63,11 +91,13 @@ class Ledger:
             symbol not in self.positions or quantity != self.positions[symbol].quantity
         ):
             raise ValueError("sell requires the entire existing position")
-        price = raw_price * (1 + (p.slippage + p.spread / 2) * (1 if side == "buy" else -1))
-        notional = quantity * price * fx
-        fee = p.fixed_fee + notional * p.commission_pct
-        fx_cost = notional * p.fx_markup if p.account_currency != "USD" else D(0)
-        cash_delta = -(notional + fee + fx_cost) if side == "buy" else notional - fee - fx_cost
+        price, notional, fee, fx_cost, cash_delta = (
+            quote.price,
+            quote.notional,
+            quote.fee,
+            quote.fx_cost,
+            quote.cash_delta,
+        )
         if self.cash + cash_delta < 0:
             raise ValueError("insufficient cash after commissions and conversion costs")
         if notional < p.min_notional:
@@ -97,7 +127,7 @@ class Ledger:
         self.cash += cash_delta
         self.fees += fee
         self.fx_costs += fx_cost
-        self.slippage_costs += abs(price - raw_price) * quantity * fx
+        self.slippage_costs += quote.slippage_cost
         self.turnover += notional
         event = {
             "timestamp": timestamp.isoformat(),

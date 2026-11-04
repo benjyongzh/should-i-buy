@@ -9,7 +9,17 @@ from app.schemas.domain import ProfileConfig
 def metrics(curve: list[dict], ledger: Ledger, profile: ProfileConfig) -> dict:
     start = float(profile.starting_capital)
     values = [start] + [float(row["equity"]) for row in curve]
-    returns = [b / a - 1 for a, b in zip(values, values[1:], strict=False)]
+    decimal_values = [profile.starting_capital] + [Decimal(row["equity"]) for row in curve]
+    returns = []
+    for previous, current in zip(decimal_values, decimal_values[1:], strict=False):
+        if previous < 0 or current < 0:
+            raise ValueError("negative equity is invalid for an unlevered portfolio")
+        if previous == 0:
+            if current != 0:
+                raise ValueError("equity cannot recover from zero without a modeled capital flow")
+            returns.append(0.0)  # zero equity is absorbing: no capital injections in the MVP
+        else:
+            returns.append(float(current / previous - 1))
     peak = start
     max_dd = 0.0
     duration = longest = 0
@@ -33,7 +43,7 @@ def metrics(curve: list[dict], ledger: Ledger, profile: ProfileConfig) -> dict:
         "net_return": net,
         "cost_addback_return": (values[-1] + float(total_costs)) / start - 1,
         "annualized_return": (1 + net) ** (252 / len(returns)) - 1
-        if len(returns) >= 252 and net > -1
+        if len(returns) >= 252 and net >= -1
         else None,
         "daily_returns": returns,
         "max_drawdown": max_dd,

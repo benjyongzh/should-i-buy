@@ -1,6 +1,6 @@
 # Synthetic acceptance demonstration
 
-Verified with engine 1.1.0 on native PostgreSQL 16; the scenario also passed on SQLite.
+Verified with engine 1.2.0 on postgresql.
 
 This is deterministic SYNTHETIC data, not actual SPY or FX performance. The real-data scenario remains unverified because no provider credentials or real FX source files were supplied.
 

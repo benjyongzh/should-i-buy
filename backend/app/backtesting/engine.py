@@ -4,9 +4,9 @@ from decimal import Decimal, localcontext
 
 from app.analytics.metrics import metrics
 from app.market_data.calendar import decision_timestamp, session_times, sessions
-from app.market_data.validation import validate_coverage
+from app.market_data.validation import validate_coverage, validate_dataset
 from app.market_data.view import DataView, fx_at
-from app.portfolio.ledger import Ledger
+from app.portfolio.ledger import Ledger, Position
 from app.schemas.domain import (
     DatasetInput,
     OrderRecord,
@@ -16,7 +16,7 @@ from app.schemas.domain import (
 )
 from app.strategies.interpreter import condition
 
-ENGINE_VERSION = "1.1.0"
+ENGINE_VERSION = "1.2.0"
 D = Decimal
 
 
@@ -45,6 +45,7 @@ def _simulate(
     benchmark: bool,
     gross: bool,
 ) -> dict:
+    validate_dataset(data)
     validate_coverage(data, profile)
     ledger = Ledger(profile)
     bars = sorted(data.bars, key=lambda b: (b.available_at, b.symbol))
@@ -99,27 +100,22 @@ def _simulate(
             try:
                 if executed_today >= profile.max_orders_per_day:
                     raise ValueError("daily order frequency limit")
-                if by_session[(order.symbol, day)].volume == 0:
-                    raise ValueError("no reported market volume")
+                quote = ledger.quote(order.side, order.quantity, raw_price, fx)
                 if order.side == "buy":
                     if len(ledger.positions) >= config.risk.max_positions:
                         raise ValueError("strategy position limit")
                     # Use execution-time opens only for risk/affordability, never to generate signals.
                     open_prices = {s: by_session[(s, day)].open for s in ledger.positions}
                     equity = ledger.equity(open_prices, fx)
-                    notional = (
-                        order.quantity
-                        * raw_price
-                        * (1 + profile.slippage + profile.spread / 2)
-                        * fx
-                    )
+                    notional = order.quantity * raw_price * fx
+                    post_trade_equity = equity + quote.cash_delta + notional
                     existing = sum(
                         (p.quantity * open_prices[s] * fx for s, p in ledger.positions.items()),
                         D(0),
                     )
-                    if notional > equity * config.risk.max_allocation:
+                    if notional > post_trade_equity * config.risk.max_allocation:
                         raise ValueError("maximum asset allocation at execution")
-                    if existing + notional > equity * profile.max_exposure:
+                    if existing + notional > post_trade_equity * profile.max_exposure:
                         raise ValueError("maximum portfolio exposure at execution")
                 event = ledger.execute(
                     order.symbol, order.side, order.quantity, raw_price, fx, timestamp, index
@@ -129,17 +125,21 @@ def _simulate(
                 order.fees = D(event["fees"])
                 order.executed_at = timestamp
                 executed_today += 1
+                if order.side == "sell":
+                    for pending in orders:
+                        if (
+                            pending is not order
+                            and pending.symbol == order.symbol
+                            and pending.side == "sell"
+                            and pending.status == "pending"
+                        ):
+                            pending.status = "cancelled"
+                            pending.rejection_reason = "position closed by an earlier exit"
             except ValueError as exc:
                 order.status = "rejected"
                 order.rejection_reason = str(exc)
 
-        for order in orders:
-            if order.status == "pending" and order.eligible_after < opening:
-                fill(order, by_session[(order.symbol, day)].open, opening, rate)
-
-        # Already active protective exits may use this candle's range. Stop wins ambiguous bars.
-        for symbol, position in list(ledger.positions.items()):
-            bar = by_session[(symbol, day)]
+        def protective_levels(position: Position) -> tuple[Decimal | None, Decimal | None]:
             stop = (
                 position.entry_price * (1 - config.risk.stop_loss)
                 if config.risk.stop_loss is not None
@@ -150,32 +150,76 @@ def _simulate(
                 if config.risk.take_profit is not None
                 else None
             )
+            return stop, take
+
+        def protective_exit(
+            symbol: str,
+            position: Position,
+            kind: str,
+            raw: Decimal,
+            timestamp: datetime,
+            fx: Decimal,
+        ) -> None:
+            order = OrderRecord(
+                id=len(orders) + 1,
+                symbol=symbol,
+                side="sell",
+                type=kind,
+                submitted_at=position.opened_at,
+                eligible_after=position.opened_at,
+                quantity=position.quantity,
+                reason=f"protective {kind}; chronological open/close policy",
+            )
+            orders.append(order)
+            fill(order, raw, timestamp, fx)
+
+        gap_attempted: set[str] = set()
+
+        def opening_protection(
+            symbol: str, day: date, opening: datetime, rate: Decimal, gap_attempted: set[str]
+        ) -> None:
+            position = ledger.positions[symbol]
+            stop, take = protective_levels(position)
+            raw_open = by_session[(symbol, day)].open
+            if stop is not None and raw_open <= stop:
+                gap_attempted.add(symbol)
+                protective_exit(symbol, position, "stop_loss", raw_open, opening, rate)
+            elif take is not None and raw_open >= take:
+                gap_attempted.add(symbol)
+                # The opening print establishes the event before any later range; no favorable gap improvement.
+                protective_exit(symbol, position, "take_profit", take, opening, rate)
+
+        # First handle opening gaps on carried positions using opening quotes only.
+        for symbol in sorted(ledger.positions):
+            opening_protection(symbol, day, opening, rate, gap_attempted)
+        for order in orders:
+            if order.status == "pending" and order.eligible_after < opening:
+                fill(order, by_session[(order.symbol, day)].open, opening, rate)
+        # Entry costs can put an immediately active protective level beyond the same opening quote.
+        for symbol in sorted(ledger.positions):
+            if ledger.positions[symbol].opened_session == index and symbol not in gap_attempted:
+                opening_protection(symbol, day, opening, rate, gap_attempted)
+
+        # Only after every opening event may the execution simulator inspect daily ranges.
+        # Book unknown intraday touches at close; stop wins genuinely ambiguous intraday bars.
+        for symbol in sorted(ledger.positions):
+            if symbol in gap_attempted:
+                continue
+            position = ledger.positions[symbol]
+            bar = by_session[(symbol, day)]
+            stop, take = protective_levels(position)
             raw = kind = None
             if stop is not None and bar.low <= stop:
-                raw, kind = min(bar.open, stop), "stop_loss"
+                raw, kind = stop, "stop_loss"
             elif take is not None and bar.high >= take:
-                raw, kind = take, "take_profit"  # no favorable gap improvement
+                raw, kind = take, "take_profit"
             if raw is not None:
-                # Unknown intraday path is booked at close, with an available close FX quote.
-                at_open = kind == "stop_loss" and bar.open <= stop
-                timestamp = opening if at_open else closing
                 fx = (
-                    fx_at(data.fx, timestamp, profile.max_fx_age_days)
+                    fx_at(data.fx, closing, profile.max_fx_age_days)
                     if profile.account_currency == "SGD"
                     else D(1)
                 )
-                order = OrderRecord(
-                    id=len(orders) + 1,
-                    symbol=symbol,
-                    side="sell",
-                    type=kind,
-                    submitted_at=position.opened_at,
-                    eligible_after=position.opened_at,
-                    quantity=position.quantity,
-                    reason=f"protective {kind}; stop-first daily-bar policy",
-                )
-                orders.append(order)
-                fill(order, raw, timestamp, fx)
+                protective_exit(symbol, position, kind, raw, closing, fx)
 
         while cursor < len(bars) and bars[cursor].available_at <= decision_time:
             history.append(bars[cursor])

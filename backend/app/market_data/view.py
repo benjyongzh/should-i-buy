@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from app.market_data.calendar import session_times
 from app.schemas.domain import Bar, FXObservation
 
 
@@ -9,7 +10,11 @@ class DataView:
 
     def __init__(self, bars: list[Bar], now: datetime):
         self.now = now
-        self.__history = tuple(b for b in bars if b.available_at <= now)
+        self.__history = tuple(
+            b
+            for b in bars
+            if max(b.available_at, b.source_timestamp, session_times(b.session_date)[1]) <= now
+        )
 
     def history(self, symbol: str, through: datetime | None = None) -> tuple[Bar, ...]:
         if through is not None and through > self.now:
@@ -17,7 +22,13 @@ class DataView:
         cutoff = through or self.now
         return tuple(
             sorted(
-                (b for b in self.__history if b.symbol == symbol and b.available_at <= cutoff),
+                (
+                    b
+                    for b in self.__history
+                    if b.symbol == symbol
+                    and max(b.available_at, b.source_timestamp, session_times(b.session_date)[1])
+                    <= cutoff
+                ),
                 key=lambda b: b.session_date,
             )
         )

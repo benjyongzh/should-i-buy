@@ -1,5 +1,9 @@
 # Implementation milestones and verification
 
+Current correctness gate: independent Milestone 3 review **passed for engine 1.2.0** after five confirmed baseline defects were fixed. The full backend suite now passes **54 tests**, including PostgreSQL, and the full four-run synthetic acceptance scenario was regenerated successfully. See `milestone-3-review.md`. Earlier 1.1.0 results remain immutable and require new runs to apply corrections.
+
+The sections below retain the original implementation verification history.
+
 ## 1 — Foundation
 Implemented modular backend/frontend, configuration, SQLAlchemy/PostgreSQL, Alembic, Compose and project conventions. Native API health and frontend startup/build verified. Migration upgrade/downgrade/reapply and schema-drift checks pass on SQLite and PostgreSQL 16. Docker runtime remains unverified because Docker is absent.
 
@@ -24,7 +28,7 @@ Implemented configurable OpenAI-compatible provider interface, strict structured
 ## 8 — Hardening / demonstration
 Implemented immutable-input database triggers, bounded requests/trees/imports/queues, server-only credentials, restricted CORS and loopback deployment defaults, input hashes and synchronized documentation. The required four-run synthetic scenario passes version/profile immutability and later-price/FX mutation invariance. Measured results are in `demo-report.md`.
 
-Final checks: **45 backend tests passed**, including PostgreSQL migrations/rollback, eight-way concurrent claiming, complete worker persistence and immutable inputs. **9 frontend workflow tests passed**; TypeScript and Vite production build passed; Ruff lint/format checks passed; npm audit found **0 vulnerabilities**. Dependency deprecation notices and a frontend chunk-size advisory are disclosed, not hidden.
+Original pre-review implementation checks: **45 backend tests passed**, including PostgreSQL migrations/rollback, eight-way concurrent claiming, complete worker persistence and immutable inputs. **9 frontend workflow tests passed**; TypeScript and Vite production build passed; Ruff lint/format checks passed; npm audit found **0 vulnerabilities**. Dependency deprecation notices and a frontend chunk-size advisory are disclosed, not hidden.
 
 Live browser verification: created a visual MA strategy, saved and validated its draft, published version 1, selected the SGD profile and an explicit synthetic revision, acknowledged synthetic use, submitted a job, processed it in the separate worker, viewed filled orders/curves, and refreshed the results page successfully. A screenshot is retained in `.local/trading-lab-result.jpg`. The native API health check and frontend HTTP startup succeeded.
 

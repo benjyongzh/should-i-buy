@@ -87,6 +87,8 @@ The Python lock records all transitive versions. Update `requirements.in`, resol
 
 ## Architecture and feature status
 
+The mandatory [Milestone 3 correctness gate](docs/milestone-3-review.md) runs before strategy-editor work and after material engine changes. Independent review found and corrected five defects in engine 1.1.0. Use engine 1.2.0 for fresh runs; previously completed results retain their original assumptions and need to be rerun to apply corrections.
+
 React/TypeScript/Vite/Tailwind + TanStack Query/Router/Recharts → FastAPI/Pydantic → SQLAlchemy/Alembic/PostgreSQL. The Python worker uses transactional row claiming, ownership tokens, progress/heartbeat leases, cancellation and visible stale-job failures. Strategies have no network, filesystem, arbitrary Python or unrestricted data access.
 
 See [architecture](docs/architecture.md), [data model](docs/data-model.md), [strategy DSL](docs/strategy-schema.md), [event ordering and accounting](docs/backtesting-engine.md), [data isolation](docs/point-in-time-data.md), [provider notes](docs/data-providers.md), [milestone verification](docs/verification.md), and [known limitations](docs/known-limitations.md).

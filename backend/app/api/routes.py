@@ -370,7 +370,7 @@ def schedule(body: Schedule, db: Session = Depends(get_db)) -> list[dict]:
         version = get(db, StrategyVersion, identifier)
         provenance = {
             "engine_version": ENGINE_VERSION,
-            "execution_model": "next-open-stop-first-v1",
+            "execution_model": "chronological-open-close-v2",
             "indicator_version": "decimal-wilder-v1",
             "strategy_hash": version.config_hash,
             "dataset_hash": dataset.content_hash,

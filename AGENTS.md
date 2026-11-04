@@ -5,6 +5,7 @@
 - Strategies are validated declarative JSON, never executable code. Profiles are independent of strategies.
 - Maintain Decimal cash accounting, historical FX availability, cash affordability including costs, and long-only unlevered positions.
 - Changes to simulation behavior require financial, causal, and reproducibility tests. Never silently fabricate historical financial results.
+- Milestone 3 is a mandatory review gate: obtain an independent review of chronology, look-ahead isolation, execution, cash/FX/cost accounting, corporate actions, and metrics before proceeding to the strategy editor (Milestone 4). Record findings, adversarial reproductions, fixes, and reviewer verification in `docs/milestone-3-review.md`. Passing the implementation's existing tests alone does not clear this gate. Apply the same gate after material engine changes; do not resume editor work with unresolved correctness findings.
 - Synthetic fixtures and demos must be visibly labeled and explicitly selected. Missing real data is an error.
 - No live brokerage execution in the MVP. Avoid unnecessary infrastructure.
 - Backend: Python 3.12+, FastAPI, SQLAlchemy 2, Alembic, pytest, Ruff. Frontend: React, TypeScript, Vite, TanStack Query, Router, Recharts.

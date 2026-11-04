@@ -1,5 +1,7 @@
 # Known limitations and remaining release verification
 
+- Engine 1.1.0 and earlier failed the independent Milestone 3 gate: future daily volume, nonchronological protection, pre-cost risk limits, opening take-profit ordering and zero-equity metrics had confirmed defects. Engine 1.2.0 corrects these. Previously completed results remain immutable and are not retroactively certified; rerun them with the corrected engine before relying on them. See `milestone-3-review.md`.
+
 - Docker is unavailable on the implementation host. Compose, Dockerfiles, health checks, migration ordering and external-DB configuration are supplied; actual Ubuntu container build/start/health verification remains required.
 - No real market-data/LLM keys or real USD/SGD source files were supplied. The full demonstration uses clearly labeled deterministic synthetic data. Real 2019–2022 prices, FX, corporate actions, provider entitlements and live structured-output compatibility remain unverified.
 - Alpaca IEX is not consolidated volume. Its historical bars may be revised, and 20:15 New York time availability is an assumption. Strict vintage research needs source-provided availability vintages. CSV imports depend on truthful source metadata and complete corporate actions. Missing splits cannot be reliably inferred from prices alone.
