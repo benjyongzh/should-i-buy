@@ -216,6 +216,7 @@ class DatasetInput(StrictModel):
     synthetic: bool = False
     adjustment_policy: Literal["raw"] = "raw"
     dividends_complete: bool = False
+    corporate_actions_reviewed: bool = False
     availability_policy: str = Field(default="source supplied timestamps", max_length=500)
     decision_time: Literal["close_plus_30m", "20:30_America/New_York"] = "close_plus_30m"
     bars: list[Bar] = Field(min_length=1, max_length=100_000)

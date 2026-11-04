@@ -15,6 +15,8 @@ def content(data: DatasetInput) -> dict:
     payload = data.model_dump(mode="json", exclude={"name"})
     if data.decision_time == "close_plus_30m":
         payload.pop("decision_time")
+    if not data.corporate_actions_reviewed:
+        payload.pop("corporate_actions_reviewed")
     payload["bars"].sort(key=lambda b: (b["symbol"], b["session_date"]))
     payload["fx"].sort(key=lambda r: (r["observed_at"], r["available_at"]))
     payload["actions"].sort(key=lambda a: (a["symbol"], a["session_date"], a["kind"]))
@@ -38,6 +40,7 @@ def import_dataset(db: Session, data: DatasetInput) -> Dataset:
             "coverage": coverage,
             "adjustment_policy": data.adjustment_policy,
             "dividends_complete": data.dividends_complete,
+            "corporate_actions_reviewed": data.corporate_actions_reviewed,
             "availability_policy": data.availability_policy,
             "decision_time": data.decision_time,
             "fx_observations": len(data.fx),
@@ -80,6 +83,7 @@ def load_dataset(db: Session, dataset: Dataset) -> DatasetInput:
         synthetic=dataset.synthetic,
         adjustment_policy=dataset.metadata_json["adjustment_policy"],
         dividends_complete=dataset.metadata_json["dividends_complete"],
+        corporate_actions_reviewed=dataset.metadata_json.get("corporate_actions_reviewed", False),
         availability_policy=dataset.metadata_json["availability_policy"],
         decision_time=dataset.metadata_json.get("decision_time", "close_plus_30m"),
         bars=list(db.scalars(select(Candle.payload).where(Candle.dataset_id == dataset.id))),

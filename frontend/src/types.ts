@@ -59,6 +59,7 @@ export interface Dataset {
     fx_observations: number
     actions: number
     dividends_complete: boolean
+    corporate_actions_reviewed?: boolean
     availability_policy: string
   }
 }

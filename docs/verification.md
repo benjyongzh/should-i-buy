@@ -24,7 +24,7 @@ Implemented configurable OpenAI-compatible provider interface, strict structured
 ## 8 — Hardening / demonstration
 Implemented immutable-input database triggers, bounded requests/trees/imports/queues, server-only credentials, restricted CORS and loopback deployment defaults, input hashes and synchronized documentation. The required four-run synthetic scenario passes version/profile immutability and later-price/FX mutation invariance. Measured results are in `demo-report.md`.
 
-Final checks: **43 backend tests passed**, including PostgreSQL migrations/rollback, eight-way concurrent claiming, complete worker persistence and immutable inputs. **9 frontend workflow tests passed**; TypeScript and Vite production build passed; Ruff lint/format checks passed; npm audit found **0 vulnerabilities**. Dependency deprecation notices and a frontend chunk-size advisory are disclosed, not hidden.
+Final checks: **45 backend tests passed**, including PostgreSQL migrations/rollback, eight-way concurrent claiming, complete worker persistence and immutable inputs. **9 frontend workflow tests passed**; TypeScript and Vite production build passed; Ruff lint/format checks passed; npm audit found **0 vulnerabilities**. Dependency deprecation notices and a frontend chunk-size advisory are disclosed, not hidden.
 
 Live browser verification: created a visual MA strategy, saved and validated its draft, published version 1, selected the SGD profile and an explicit synthetic revision, acknowledged synthetic use, submitted a job, processed it in the separate worker, viewed filled orders/curves, and refreshed the results page successfully. A screenshot is retained in `.local/trading-lab-result.jpg`. The native API health check and frontend HTTP startup succeeded.
 
@@ -33,3 +33,5 @@ The complete four-run acceptance demonstration also passed against native Postgr
 Provider hardening: official aggregation rules show that Alpaca daily volume includes extended-hours prints. Complete bars are now gated to assumed 20:15 New York publication, evaluated at 20:30, rather than exposing final daily volume at regular close. A dedicated mock-provider test verifies pagination, raw/IEX parameters, evening availability and explicit entitlement errors. Engine version is 1.1.0; old completed results remain unchanged.
 
 Release status remains **locally verified synthetic MVP; Docker and credentialed real-data/LLM validation outstanding**, rather than claiming a real-data production deployment.
+
+Final data-quality guards also reject unfinished API daily bars and block unreviewed real raw corporate-action histories. Both have dedicated passing tests; synthetic fixtures remain visibly labeled and unaffected.

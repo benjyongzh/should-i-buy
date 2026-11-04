@@ -44,6 +44,7 @@ class CSVImport(StrictModel):
     fx_csv: str = Field(default="", max_length=3_000_000)
     actions_csv: str = Field(default="", max_length=1_000_000)
     dividends_complete: bool = False
+    corporate_actions_reviewed: bool = False
     availability_policy: str = Field(default="source supplied timestamps", max_length=500)
     decision_time: Literal["close_plus_30m", "20:30_America/New_York"] = "close_plus_30m"
 

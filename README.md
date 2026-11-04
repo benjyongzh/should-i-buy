@@ -49,7 +49,7 @@ Docker is not installed on the development host, so container build/start verifi
 
 ## First research workflow
 
-1. **Market data:** import raw daily OHLCV CSV plus USD/SGD FX and corporate actions as one immutable revision. Inspect coverage and provenance. Alternatively configure server-side Alpaca keys; its read-only adapter fetches raw IEX daily bars. Missing credentials or coverage produce explicit errors.
+1. **Market data:** import raw daily OHLCV CSV plus USD/SGD FX and corporate actions as one immutable revision. Inspect coverage and provenance. For real raw data, review corporate-action history, supply all effective splits, and attest that review in the import form before scheduling. Alternatively configure server-side Alpaca keys; its read-only adapter fetches raw IEX daily bars. Missing credentials or coverage produce explicit errors.
 2. **Strategies:** create a strategy, choose a template or compose typed conditions, edit sizing/risk, validate, save the working draft, then publish a version. The advanced JSON editor uses the same backend schema.
 3. **Backtest profiles:** save capital, currency, dates, symbols, benchmark, fees, slippage and constraints. The standard defaults are SGD 10,000 and SGD 2.50 per executed order.
 4. **New backtest:** select one or more published versions, one profile and one dataset. Jobs execute in the separate worker. Synthetic datasets require explicit acknowledgment.

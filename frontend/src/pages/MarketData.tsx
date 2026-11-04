@@ -15,6 +15,7 @@ export function MarketData() {
   const [actions, setActions] = useState('')
   const [synthetic, setSynthetic] = useState(false)
   const [complete, setComplete] = useState(false)
+  const [reviewed, setReviewed] = useState(false)
   const [decisionTime, setDecisionTime] = useState('close_plus_30m')
   const [message, setMessage] = useState('')
   const [symbols, setSymbols] = useState('SPY')
@@ -29,6 +30,7 @@ export function MarketData() {
         bars_csv: bars,
         fx_csv: fx,
         actions_csv: actions,
+        corporate_actions_reviewed: reviewed,
         synthetic,
         dividends_complete: complete,
         decision_time: decisionTime,
@@ -46,6 +48,7 @@ export function MarketData() {
         end,
         fx_csv: fx,
         actions_csv: actions,
+        corporate_actions_reviewed: reviewed,
       }),
     onSuccess: async (d) => {
       await qc.invalidateQueries({ queryKey: ['datasets'] })
@@ -133,7 +136,12 @@ export function MarketData() {
                       {d.metadata_json.dividends_complete
                         ? 'Dividend completeness attested'
                         : 'Price-only'}
-                      <small>{d.metadata_json.actions} corporate actions</small>
+                      <small>
+                        {d.metadata_json.actions} corporate actions ·{' '}
+                        {d.metadata_json.corporate_actions_reviewed
+                          ? 'split coverage reviewed'
+                          : 'split review not attested'}
+                      </small>
                     </td>
                   </tr>
                 ))}
@@ -199,6 +207,14 @@ export function MarketData() {
                 onChange={(e) => setSynthetic(e.target.checked)}
               />{' '}
               This is synthetic demonstration data
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={reviewed}
+                onChange={(e) => setReviewed(e.target.checked)}
+              />{' '}
+              I reviewed corporate-action coverage and supplied all effective splits
             </label>
             <label className="checkbox">
               <input
@@ -287,6 +303,14 @@ export function MarketData() {
                 />
                 <small>{actions.length.toLocaleString()} characters loaded</small>
               </Field>
+              <label className="checkbox">
+                <input
+                  type="checkbox"
+                  checked={reviewed}
+                  onChange={(e) => setReviewed(e.target.checked)}
+                />{' '}
+                I reviewed corporate-action coverage and supplied all effective splits
+              </label>
               <button className="secondary" disabled={fetchData.isPending}>
                 {fetchData.isPending ? 'Fetching…' : 'Fetch historical bars'}
               </button>

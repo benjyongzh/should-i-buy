@@ -86,6 +86,10 @@ class AlpacaProvider:
                         close = datetime.combine(
                             day, day_time(20), ZoneInfo("America/New_York")
                         ).astimezone(UTC)
+                        if close + timedelta(minutes=15) > datetime.now(UTC):
+                            raise ValueError(
+                                "Alpaca returned an unfinished daily session; import completed sessions only"
+                            )
                         bars.append(
                             Bar(
                                 symbol=symbol,

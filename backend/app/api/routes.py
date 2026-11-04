@@ -303,6 +303,7 @@ class ProviderImport(StrictModel):
     fx: list[FXObservation] = Field(default_factory=list, max_length=30_000)
     fx_csv: str = Field(default="", max_length=3_000_000)
     actions_csv: str = Field(default="", max_length=1_000_000)
+    corporate_actions_reviewed: bool = False
 
 
 @router.post("/market-data/alpaca", status_code=201)
@@ -310,6 +311,7 @@ def alpaca(body: ProviderImport, db: Session = Depends(get_db)) -> dict:
     if body.start > body.end or (body.end - body.start).days > 1827:
         raise ValueError("Alpaca import must span between 0 and 1827 days")
     data = AlpacaProvider().fetch(body.symbols, body.start, body.end)
+    data.corporate_actions_reviewed = body.corporate_actions_reviewed
     data.fx = (
         body.fx + [FXObservation.model_validate(r) for r in csv_records(body.fx_csv)]
         if body.fx_csv

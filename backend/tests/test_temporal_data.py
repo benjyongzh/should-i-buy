@@ -54,6 +54,17 @@ def test_missing_session_rejected_no_future_replacement(data):
         validate_coverage(broken, profile)
 
 
+def test_real_raw_data_requires_split_history_review(data):
+    real = data.model_copy(update={"synthetic": False})
+    profile = ProfileConfig(
+        start_date=data.bars[0].session_date, end_date=data.bars[-1].session_date
+    )
+    with pytest.raises(ValueError, match="reviewed corporate-action"):
+        validate_coverage(real, profile)
+    reviewed = real.model_copy(update={"corporate_actions_reviewed": True})
+    validate_coverage(reviewed, profile)
+
+
 def test_bad_csv():
     with pytest.raises(ValueError, match="inconsistent"):
         csv_records("symbol,open\nSPY,1,2")

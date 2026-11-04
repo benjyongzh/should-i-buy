@@ -39,6 +39,10 @@ def validate_dataset(data: DatasetInput) -> dict:
 
 
 def validate_coverage(data: DatasetInput, profile: ProfileConfig) -> None:
+    if not data.synthetic and not data.corporate_actions_reviewed:
+        raise ValueError(
+            "Raw historical data requires reviewed corporate-action coverage. Supply all effective splits, attest the source review, and import a new revision before backtesting."
+        )
     days = sessions(profile.start_date, profile.end_date)
     if not days:
         raise ValueError("profile contains no trading sessions")

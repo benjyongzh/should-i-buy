@@ -72,3 +72,36 @@ def test_provider_failure_does_not_use_synthetic_data(monkeypatch):
     )
     with pytest.raises(ValueError, match="HTTP 403"):
         providers.AlpacaProvider().fetch(["SPY"], date(2019, 1, 2), date(2019, 1, 3))
+
+
+def test_provider_rejects_unfinished_daily_bar(monkeypatch):
+    class FrozenDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2019, 1, 2, 18, tzinfo=UTC)
+
+    client_type = httpx.Client
+    payload = {
+        "bars": {
+            "SPY": [
+                {"t": "2019-01-02T05:00:00Z", "o": 100, "h": 102, "l": 99, "c": 101, "v": 10000}
+            ]
+        }
+    }
+    monkeypatch.setattr(providers, "datetime", FrozenDatetime)
+    monkeypatch.setattr(
+        providers.httpx,
+        "Client",
+        lambda **kwargs: client_type(
+            transport=httpx.MockTransport(lambda request: httpx.Response(200, json=payload))
+        ),
+    )
+    monkeypatch.setattr(
+        providers,
+        "settings",
+        lambda: Settings(
+            alpaca_api_key=SecretStr("fixture"), alpaca_secret_key=SecretStr("fixture")
+        ),
+    )
+    with pytest.raises(ValueError, match="unfinished daily session"):
+        providers.AlpacaProvider().fetch(["SPY"], date(2019, 1, 2), date(2019, 1, 2))
