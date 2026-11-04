@@ -64,7 +64,7 @@ For an explicitly synthetic, end-to-end 2019–2022 demonstration:
 ..\.venv\Scripts\python -m app.demo
 ```
 
-This creates labeled demo data, three strategies, a revised MA version and four persistent results, then asserts version/profile immutability and future-price/FX mutation invariance. See [the measured demo report](docs/demo-report.md). These are synthetic results, not historical SPY performance. No real data or LLM credentials were supplied during verification.
+This creates labeled demo data, three strategies, a revised MA version and four persistent results, then asserts version/profile immutability and future-price/FX mutation invariance. See [the measured demo report](docs/demo-report.md). These are synthetic results, not historical SPY performance. That original demonstration used no real data or LLM credentials; subsequent credentialed integration checks are recorded in the deployment runbook.
 
 ## Checks
 
@@ -95,6 +95,6 @@ React/TypeScript/Vite/Tailwind + TanStack Query/Router/Recharts → FastAPI/Pyda
 
 See [architecture](docs/architecture.md), [data model](docs/data-model.md), [strategy DSL](docs/strategy-schema.md), [event ordering and accounting](docs/backtesting-engine.md), [data isolation](docs/point-in-time-data.md), [provider notes](docs/data-providers.md), [milestone verification](docs/verification.md), and [known limitations](docs/known-limitations.md).
 
-Implemented through the synthetic MVP workflow, including verified Docker Desktop deployment/persistence on Windows. Remaining release verification: credentialed provider/LLM calls and the real 2019–2022 equity/FX/corporate-action scenario. No fabricated real-data returns or live trading are included.
+Implemented through the synthetic MVP workflow, including verified Docker Desktop deployment/persistence on Windows. Supplied paper credentials now authenticate successfully and import 1,259 real SPY SIP bars for 2018–2022; that revision remains unreviewed and blocked from backtesting until FX/actions are complete. Live LLM authoring is blocked by exhausted OpenAI API credit. Complete real historical backtest acceptance remains outstanding. No fabricated real-data returns or live trading are included.
 
 The [deployment and real-data runbook](docs/deployment-verification.md) records current checks, credentials to configure locally, a free-first source plan and isolated Docker verification commands that avoid existing homelab databases and ports.
