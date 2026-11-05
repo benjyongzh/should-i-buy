@@ -8,6 +8,8 @@ import { Check, Save, Sparkles } from 'lucide-react'
 import { api } from '../lib/api'
 import { Badge, ErrorBox, Field, PageTitle, Panel } from '../components/ui'
 import { RuleEditor } from '../components/RuleEditor'
+import { AdvancedStrategyControls } from '../components/AdvancedStrategyControls'
+import { TradingControls, defaultTrading } from '../components/TradingControls'
 import { crossover, defaultStrategy, rsi } from '../types'
 import type { Strategy, StrategyConfig, Version } from '../types'
 
@@ -18,7 +20,16 @@ const formSchema = z.object({
 interface Proposal {
   id: string
   config: StrategyConfig
-  metadata_json: { model: string; prompt_version: string }
+  metadata_json: {
+    model: string
+    prompt_version: string
+    blocked?: boolean
+    interpretation?: string
+    assumptions?: string[]
+    data_requirements?: string[]
+    unsupported_requests?: string[]
+    capabilities?: unknown
+  }
 }
 export function StrategyEditor() {
   const { id } = useParams()
@@ -43,6 +54,7 @@ export function StrategyEditor() {
   const [summary, setSummary] = useState('')
   const [prompt, setPrompt] = useState('')
   const [proposal, setProposal] = useState<Proposal | null>(null)
+  const [reviewedProposal, setReviewedProposal] = useState(false)
   const [diff, setDiff] = useState<string[]>([])
   const {
     register,
@@ -95,11 +107,14 @@ export function StrategyEditor() {
       }
       if (task === 'propose') {
         if (!strategy.data) throw new Error('Save a draft before using the assistant')
-        const p = await api<Proposal>('/llm/modify-strategy', 'POST', { strategy_id: id, prompt })
+        const p = await api<Proposal>('/llm/plan-strategy', 'POST', { strategy_id: id, prompt })
         setProposal(p)
+        setReviewedProposal(false)
         return
       }
       if (task === 'accept') {
+        if (!reviewedProposal || proposal?.metadata_json.blocked)
+          throw new Error('Review a supported interpretation before accepting')
         await api(`/llm/proposals/${proposal!.id}/accept`, 'POST')
         setProposal(null)
         await qc.invalidateQueries()
@@ -234,7 +249,7 @@ export function StrategyEditor() {
                   <div className="rule-heading">
                     <span className="signal-dot buy" />
                     <h3>Entry condition</h3>
-                    <small>Buy when flat and this rule is true</small>
+                    <small>Buy or rebalance when the entry rule and schedule permit</small>
                   </div>
                   <RuleEditor
                     value={config.entry}
@@ -243,12 +258,15 @@ export function StrategyEditor() {
                   <div className="rule-heading">
                     <span className="signal-dot sell" />
                     <h3>Exit condition</h3>
-                    <small>Sell the existing position</small>
+                    <small>
+                      Sell the configured fraction when the exit rule and schedule permit
+                    </small>
                   </div>
                   <RuleEditor
                     value={config.exit}
                     onChange={(exit) => update({ ...config, exit })}
                   />
+                  <TradingControls config={config} onChange={update} />
                   <h3 className="subheading">Position sizing & risk</h3>
                   <div className="form-grid">
                     <Field label="Sizing method">
@@ -257,18 +275,31 @@ export function StrategyEditor() {
                         onChange={(e) =>
                           update({
                             ...config,
+                            ...(['cash_percent', 'target_allocation'].includes(e.target.value) &&
+                            !config.trading
+                              ? { trading: { ...defaultTrading } }
+                              : {}),
                             sizing: {
                               ...config.sizing,
-                              mode: e.target.value as 'equity_percent' | 'fixed_notional',
+                              mode: e.target.value as StrategyConfig['sizing']['mode'],
+                              value:
+                                e.target.value === 'fixed_notional'
+                                  ? config.sizing.value
+                                  : Math.min(1, Number(config.sizing.value)),
                             },
                           })
                         }
                       >
                         <option value="equity_percent">Fraction of portfolio equity</option>
                         <option value="fixed_notional">Fixed account-currency notional</option>
+                        <option value="cash_percent">Fraction of available cash</option>
+                        <option value="target_allocation">Target allocation — buy or trim</option>
                       </select>
                     </Field>
-                    <Field label="Sizing value" hint="0.10 means 10% when using equity fraction">
+                    <Field
+                      label="Sizing value"
+                      hint="Fractions: 0.10 means 10%. Fixed notional is an order budget including costs."
+                    >
                       <input
                         type="number"
                         step="any"
@@ -336,12 +367,13 @@ export function StrategyEditor() {
                       </Field>
                     ))}
                   </div>
+                  <AdvancedStrategyControls config={config} onChange={update} />
                 </>
               )}
               <div className="notice">
-                Signals are evaluated after completed daily candles become available. Market orders
-                wait until the next eligible session open. Stop-first protective exits are
-                conservative when the daily price path is ambiguous.
+                Signals use completed observations available at the decision clock. Orders wait for
+                a strictly later eligible open. Intraday timing needs intraday data. Stop-first
+                protection is conservative when an interval's price path is ambiguous.
               </div>
             </Panel>
             <div className="sticky-actions">
@@ -457,6 +489,26 @@ export function StrategyEditor() {
                   <small>
                     {proposal.metadata_json.model} · {proposal.metadata_json.prompt_version}
                   </small>
+                  <p>{proposal.metadata_json.interpretation}</p>
+                  {(['assumptions', 'data_requirements', 'unsupported_requests'] as const).map(
+                    (key) =>
+                      proposal.metadata_json[key]?.length ? (
+                        <div key={key}>
+                          <strong>{key.replaceAll('_', ' ')}</strong>
+                          <ul>
+                            {proposal.metadata_json[key]!.map((value, i) => (
+                              <li key={i}>{value}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null,
+                  )}
+                  {proposal.metadata_json.blocked && (
+                    <p role="alert" className="warning">
+                      This request contains unsupported requirements and cannot be accepted. Revise
+                      the request.
+                    </p>
+                  )}
                   <details open>
                     <summary>Current → proposed definition</summary>
                     <pre>
@@ -467,9 +519,18 @@ export function StrategyEditor() {
                       )}
                     </pre>
                   </details>
+                  <label className="checkbox">
+                    <input
+                      type="checkbox"
+                      checked={reviewedProposal}
+                      onChange={(e) => setReviewedProposal(e.target.checked)}
+                    />{' '}
+                    I reviewed the interpretation, data requirements and proposed rules.
+                  </label>
                   <button
                     type="button"
                     className="button"
+                    disabled={!reviewedProposal || !!proposal.metadata_json.blocked}
                     onClick={() => operation.mutate('accept')}
                   >
                     Accept into draft

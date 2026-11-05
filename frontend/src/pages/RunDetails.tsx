@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, useLab } from '../lib/api'
+import { api, useCashBenchmarks, useLab } from '../lib/api'
 import { Badge, ErrorBox, money, number, PageTitle, Panel, percent, Stat } from '../components/ui'
 import { EquityChart } from '../components/EquityChart'
+import { PeriodPerformance } from '../components/PeriodPerformance'
+import { PerformanceTimeline } from '../components/PerformanceTimeline'
 import type { Result, Run } from '../types'
 
 export function RunDetails() {
@@ -25,6 +27,7 @@ export function RunDetails() {
     enabled: run.data?.status === 'completed',
     staleTime: Infinity,
   })
+  const cash = useCashBenchmarks(run.data?.status === 'completed' ? [run.data] : [])
   const cancel = useMutation({
     mutationFn: () => api(`/backtests/${id}/cancel`, 'POST'),
     onSuccess: () => qc.invalidateQueries(),
@@ -50,7 +53,7 @@ export function RunDetails() {
         description={`Run ${id?.slice(0, 8)} · ${r?.profile_snapshot.start_date || ''} — ${r?.profile_snapshot.end_date || ''}`}
         action={r && <Badge value={r.status} />}
       />
-      <ErrorBox error={run.error || result.error || cancel.error} />
+      <ErrorBox error={run.error || result.error || cancel.error || cash[0]?.error} />
       {r && (
         <>
           {r.provenance.synthetic && (
@@ -86,7 +89,7 @@ export function RunDetails() {
               detail={`Start ${money(m.starting_equity, currency)}`}
             />
             <Stat
-              label="Net total return"
+              label={m.return_method ? 'Net time-weighted return' : 'Net total return'}
               value={percent(m.total_return)}
               detail={`Benchmark ${percent(m.benchmark_total_return)}`}
             />
@@ -101,14 +104,19 @@ export function RunDetails() {
               detail="Daily returns · 252-session annualization"
             />
           </div>
-          <Panel title={`Portfolio equity · ${currency}`}>
-            <EquityChart
-              series={[
-                { name: 'Strategy · net', equity: data.equity },
-                { name: 'Benchmark · net', equity: data.benchmark.equity },
+          {r && (
+            <PerformanceTimeline
+              entries={[
+                {
+                  run: r,
+                  name: `${name}${v ? ' · v' + v.number : ''} · ${r.id.slice(0, 8)}`,
+                  result: data,
+                  cash: cash[0]?.data,
+                },
               ]}
             />
-          </Panel>
+          )}
+          {id && <PeriodPerformance runId={id} currency={currency} />}
           <div className="two-columns">
             <Panel title="Drawdown">
               <EquityChart drawdown series={[{ name: 'Strategy', equity: data.equity }]} />
@@ -116,7 +124,15 @@ export function RunDetails() {
             <Panel title="Performance & costs">
               <div className="metric-list">
                 {[
-                  ['Completed round trips', m.completed_trades],
+                  ['Completed exit tranches', m.completed_trades],
+                  ['Investment P&L (deposits excluded)', money(m.absolute_pnl, currency)],
+                  ...(m.return_method
+                    ? [
+                        ['Salary contributions', money(m.total_contributions, currency)],
+                        ['Total contributed capital', money(m.total_contributed_capital, currency)],
+                        ['Investor money-weighted return', percent(m.money_weighted_return)],
+                      ]
+                    : []),
                   ['Executed orders', m.executed_orders],
                   ['Win rate', percent(m.win_rate)],
                   ['Annualized return', percent(m.annualized_return)],
@@ -137,7 +153,10 @@ export function RunDetails() {
                 ))}
               </div>
               <small>
-                Cost add-back is a ledger attribution, not a separate cost-free strategy simulation.
+                Partial sales count as exit tranches using pooled average cost. For funded runs,
+                return and drawdown exclude deposits; investor return needs at least 365 elapsed
+                days. Cost add-back is unavailable for funded runs; gross return uses a separate
+                replay.
               </small>
             </Panel>
           </div>
@@ -241,6 +260,20 @@ export function RunDetails() {
                           : String(s.condition_result)}
                       </summary>
                       <pre>{JSON.stringify(s.rule, null, 2)}</pre>
+                      {s.exit_rule && (
+                        <pre>
+                          {JSON.stringify(
+                            {
+                              exit_rule: s.exit_rule,
+                              exit_condition_result: s.exit_condition_result,
+                              reason: s.reason,
+                            },
+                            null,
+                            2,
+                          )}
+                        </pre>
+                      )}
+                      {s.external_inputs && <pre>{JSON.stringify(s.external_inputs, null, 2)}</pre>}
                     </details>
                   ))}
                 </div>

@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus } from 'lucide-react'
 import { api, useLab } from '../lib/api'
 import { Badge, Empty, ErrorBox, Field, money, PageTitle, Panel, short } from '../components/ui'
-import type { Run } from '../types'
+import type { ContextSnapshot, Run, StrategyInputRevision } from '../types'
 
 export function Backtests() {
   const lab = useLab()
@@ -98,10 +98,47 @@ export function NewBacktest() {
   const [selected, setSelected] = useState<string[]>([])
   const [name, setName] = useState('')
   const [ack, setAck] = useState(false)
+  const [contexts, setContexts] = useState<string[]>([])
+  const [inputIds, setInputIds] = useState<string[]>([])
+  const inputs = useQuery({
+    queryKey: ['strategy-inputs'],
+    queryFn: () => api<StrategyInputRevision[]>('/strategy-inputs'),
+  })
+  const readiness = useMutation({
+    mutationFn: () =>
+      Promise.all(
+        selected.map(async (id) => ({
+          id,
+          ...(await api<{ ready_to_run: boolean; blockers: string[]; requirements: unknown }>(
+            '/strategy-definitions/requirements',
+            'POST',
+            {
+              config: lab.versions.find((v) => v.id === id)!.config,
+              profile_id: profileId,
+              dataset_id: datasetId,
+              strategy_input_ids: inputIds,
+              context_snapshot_ids: contexts,
+            },
+          )),
+        })),
+      ),
+  })
+  const readinessSelection = JSON.stringify([selected, profileId, datasetId, inputIds, contexts])
+  useEffect(() => {
+    readiness.reset()
+  }, [readinessSelection])
+  const sources = useQuery({
+    queryKey: ['context'],
+    queryFn: () => api<ContextSnapshot[]>('/research/context'),
+  })
   const navigate = useNavigate()
   const qc = useQueryClient()
   const profile = lab.profiles.find((p) => p.id === profileId)
   const dataset = lab.datasets.find((d) => d.id === datasetId)
+  const syntheticInputs =
+    dataset?.synthetic ||
+    sources.data?.some((s) => contexts.includes(s.id) && s.synthetic) ||
+    inputs.data?.some((s) => inputIds.includes(s.id) && s.synthetic)
   const submit = useMutation({
     mutationFn: () =>
       api<Run[]>('/backtests', 'POST', {
@@ -110,6 +147,8 @@ export function NewBacktest() {
         dataset_id: datasetId,
         experiment_name: name,
         acknowledge_synthetic: ack,
+        context_snapshot_ids: contexts,
+        strategy_input_ids: inputIds,
       }),
     onSuccess: async (rows) => {
       await qc.invalidateQueries()
@@ -127,7 +166,7 @@ export function NewBacktest() {
         title="Same conditions. Different ideas."
         description="Choose immutable strategy versions and run them against one shared profile and dataset."
       />
-      <ErrorBox error={submit.error} />
+      <ErrorBox error={submit.error || sources.error || inputs.error || readiness.error} />
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -257,18 +296,82 @@ export function NewBacktest() {
                       missing sessions
                     </p>
                   ))}
-                  {dataset.synthetic && (
-                    <label className="checkbox warning">
-                      <input
-                        required
-                        type="checkbox"
-                        checked={ack}
-                        onChange={(e) => setAck(e.target.checked)}
-                      />{' '}
-                      I understand this is synthetic data, not historical investment performance.
-                    </label>
-                  )}
                 </>
+              )}
+              <h3>Reviewed external signal inputs</h3>
+              <p>
+                Required for external expressions.{' '}
+                <Link to="/context">Import and review sources</Link> first. Exact revisions are
+                frozen for all selected runs.
+              </p>
+              {sources.data
+                ?.filter((s) => s.research_only === false)
+                .map((s) => (
+                  <label className="check-row" key={s.id}>
+                    <input
+                      type="checkbox"
+                      checked={contexts.includes(s.id)}
+                      disabled={contexts.length >= 20 && !contexts.includes(s.id)}
+                      onChange={(e) => {
+                        setContexts(
+                          e.target.checked
+                            ? [...contexts, s.id]
+                            : contexts.filter((id) => id !== s.id),
+                        )
+                        setAck(false)
+                      }}
+                    />
+                    <span>
+                      {s.synthetic ? 'SYNTHETIC · ' : ''}
+                      {s.series_id} · {s.content_hash.slice(0, 12)}
+                      <small>
+                        {s.requested_start} — {s.requested_end} · {s.units}
+                      </small>
+                    </span>
+                  </label>
+                ))}
+              <h3>Reviewed strategy sources</h3>
+              <p>
+                Intraday prices, historical sectors, news, analyst changes and Congress disclosures.{' '}
+                <Link to="/sources">Import and review sources</Link>. Only reviewed revisions can be
+                selected; exact hashes are retained with every run.
+              </p>
+              {inputs.data
+                ?.filter((s) => s.reviewed)
+                .map((s) => (
+                  <label className="check-row" key={s.id}>
+                    <input
+                      type="checkbox"
+                      checked={inputIds.includes(s.id)}
+                      disabled={inputIds.length >= 100 && !inputIds.includes(s.id)}
+                      onChange={(e) => {
+                        setInputIds(
+                          e.target.checked
+                            ? [...inputIds, s.id]
+                            : inputIds.filter((id) => id !== s.id),
+                        )
+                        setAck(false)
+                      }}
+                    />
+                    <span>
+                      {s.synthetic ? 'SYNTHETIC · ' : ''}
+                      {s.name} · {s.kind} · {s.content_hash.slice(0, 12)}
+                      <small>
+                        {s.coverage_start} — {s.coverage_end} · {s.symbols.join(', ')}
+                      </small>
+                    </span>
+                  </label>
+                ))}
+              {syntheticInputs && (
+                <label className="checkbox warning">
+                  <input
+                    required
+                    type="checkbox"
+                    checked={ack}
+                    onChange={(e) => setAck(e.target.checked)}
+                  />{' '}
+                  I understand this is synthetic data, not historical investment performance.
+                </label>
               )}
             </Panel>
           </div>
@@ -297,11 +400,36 @@ export function NewBacktest() {
                   !profileId ||
                   !datasetId ||
                   submit.isPending ||
-                  (dataset?.synthetic && !ack)
+                  !!(syntheticInputs && !ack)
                 }
               >
                 {submit.isPending ? 'Validating coverage…' : 'Queue backtests'}
               </button>
+              <button
+                type="button"
+                className="secondary full"
+                disabled={!selected.length || !profileId || !datasetId || readiness.isPending}
+                onClick={() => readiness.mutate()}
+              >
+                Check selected data readiness
+              </button>
+              {readiness.data?.map((report) => (
+                <div key={report.id}>
+                  <strong>
+                    Version {lab.versions.find((v) => v.id === report.id)?.number}:{' '}
+                    {report.ready_to_run ? 'Ready with checked inputs' : 'Blocked'}
+                  </strong>
+                  {report.blockers.map((b, i) => (
+                    <p className="warning" key={i}>
+                      {b}
+                    </p>
+                  ))}
+                  <details>
+                    <summary>Required historical inputs</summary>
+                    <pre>{JSON.stringify(report.requirements, null, 2)}</pre>
+                  </details>
+                </div>
+              ))}
               <small>
                 Simulation runs in the background worker. You can safely leave this page.
               </small>

@@ -22,6 +22,8 @@ import { MarketData } from './pages/MarketData'
 import { Backtests, NewBacktest } from './pages/Backtests'
 import { RunDetails } from './pages/RunDetails'
 import { Compare } from './pages/Compare'
+import { ContextData } from './pages/ContextData'
+import { StrategySources } from './pages/StrategySources'
 
 const nav = [
   ['/', 'Overview', LayoutDashboard],
@@ -30,6 +32,8 @@ const nav = [
   ['/backtests', 'Backtests', Activity],
   ['/compare', 'Compare', ChartNoAxesCombined],
   ['/data', 'Market data', Database],
+  ['/context', 'Market context', BookOpen],
+  ['/sources', 'Strategy inputs', Database],
 ] as const
 export default function App() {
   const location = useLocation()
@@ -111,6 +115,8 @@ export default function App() {
             <Route path="/strategies/:id" element={<StrategyEditor key={location.pathname} />} />
             <Route path="/profiles" element={<Profiles />} />
             <Route path="/data" element={<MarketData />} />
+            <Route path="/context" element={<ContextData />} />
+            <Route path="/sources" element={<StrategySources />} />
             <Route path="/backtests" element={<Backtests />} />
             <Route path="/backtests/new" element={<NewBacktest />} />
             <Route path="/backtests/:id" element={<RunDetails />} />

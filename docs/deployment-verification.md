@@ -1,5 +1,21 @@
 # Deployment and real-data verification — 2026-11-04
 
+Current 2.0 deployment, migration, restart/isolation and bounded live-source checks
+are recorded in [historical capability verification](historical-capabilities-verification-2026-11-05.md).
+Earlier dated commands/results below retain their original engine and scope.
+
+## Latest evidence — 2026-11-05
+
+Real SPY acceptance follow-up: reviewed combined dataset `051e4285-e374-4b44-b82c-a54ffc8a6a6e` imported through the deployed API and persisted six real strategy runs plus six exact repeats in PostgreSQL through the separate worker. Independent daily financial/signal/benchmark reconciliation passed. All121 backend/PostgreSQL tests and Ruff pass. No app rebuild/restart or engine behavior change was required in this source/integration pass; the existing frontend's17-test/build result is retained. [Actual results and bounded source policy](real-spy-acceptance-2026-11-05.md) supersede the earlier SPY FX/action blocker statements below. No claim of new backup/recovery or real-run container-restart testing is made.
+
+Engine 1.3.0 follow-up: 109 backend/PostgreSQL and 17 frontend tests pass, as do lint/format/build. Mandatory independent financial/causal review passed after a split-day crossover fix. The isolated project at loopback 18080 rebuilt/deployed the indicator/external-input extension. Three explicitly synthetic MACD/stochastic/external runs completed in the separate worker; an external rerun was identical. Reviewed source revisions and results survived final app recreation; migration succeeded and `alembic check` found no drift. All 21 homelab container identities/uptimes/ports remained unchanged; the isolated database container and volume were retained. Live LLM generation and modification passed the extended schema and explicit acceptance/publication checks. No real financial acceptance or qualified Fear & Greed source is claimed. See [current verification](verification.md) and [input workflow](strategy-inputs.md). The following paragraph records the earlier context-only batch.
+
+The isolated Linux project now runs the context/period-reporting extension with migration `003_context_snapshots`, no drift, healthy frontend/API/database and running worker. All nine context imports passed after fixing FRED's US-day cutoff and 2,000-vintage limit. Existing result hashes reconcile unchanged. Current checks are 83 backend and 12 frontend tests/build, plus Ruff. See [continuous research](continuous-research.md) for the latest actual results; earlier sections below retain dated historical evidence.
+
+FRED credentialed retrieval and standalone FX preparation have since completed. The candidate remains unaccepted pending source-flag disposition and FX-age policy review; see [FX review](fx-data-review.md). The historical table below's missing-FRED-key blocker no longer applies. Current backend checks pass **73 tests including PostgreSQL**; Ruff lint/format pass. No running service, immutable revision or profile was changed by preparation.
+
+Linux Docker verification and live LLM generation/modification have now passed. Use the pinned Linux project/port commands and current evidence in [verification-linux-2026-11-05.md](verification-linux-2026-11-05.md). This is a separate project from the earlier Windows test below. It uses `127.0.0.1:18080`, an isolated bundled database/volume, and leaves all pre-existing homelab containers untouched. Real SPY bars were re-imported successfully; FX/actions and real backtest acceptance remain incomplete. The sections below preserve the earlier Windows record; their Linux-unverified and LLM-quota-blocked statements are historical.
+
 ## Status and required inputs
 
 Docker build/start, network connectivity and persistence were demonstrated on this Windows machine using Docker Desktop's WSL 2 Linux engine after the user installed Desktop. Real-market and live LLM acceptance remain blocked. Engine 1.2.0 and its financial event ordering are unchanged. The Linux-host command examples below remain a procedure for a future Ubuntu deployment, not evidence of an Ubuntu-host test.

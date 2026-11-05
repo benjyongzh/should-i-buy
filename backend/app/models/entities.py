@@ -115,3 +115,19 @@ class LLMProposal(Identity, Base):
     config: Mapped[dict] = mapped_column(Json)
     metadata_json: Mapped[dict] = mapped_column(Json)
     accepted: Mapped[bool] = mapped_column(default=False)
+
+
+class ContextSnapshot(Identity, Base):
+    """Research-only source history; never exposed to the strategy interpreter."""
+
+    __tablename__ = "context_snapshots"
+    series_id: Mapped[str] = mapped_column(String(32), index=True)
+    content_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    payload: Mapped[dict] = mapped_column(Json)
+
+
+class StrategyInputRevision(Identity, Base):
+    __tablename__ = "strategy_input_revisions"
+    kind: Mapped[str] = mapped_column(String(16), index=True)
+    content_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    payload: Mapped[dict] = mapped_column(Json)

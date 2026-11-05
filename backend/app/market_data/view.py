@@ -2,7 +2,39 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from app.market_data.calendar import session_times
-from app.schemas.domain import Bar, FXObservation
+from app.schemas.domain import Action, Bar, FXObservation
+
+
+def split_history(bars: list[Bar], actions: list[Action], now: datetime) -> list[Bar]:
+    """Rebase raw history using only splits effective and known at this exact clock."""
+    from zoneinfo import ZoneInfo
+
+    day = now.astimezone(ZoneInfo("America/New_York")).date()
+    adjusted = []
+    for bar in bars:
+        ratio = Decimal(1)
+        for action in actions:
+            if (
+                action.kind == "split"
+                and action.symbol == bar.symbol
+                and bar.session_date < action.session_date <= day
+                and action.available_at <= now
+            ):
+                ratio *= action.value
+        adjusted.append(
+            bar.model_copy(
+                update={
+                    "open": bar.open / ratio,
+                    "high": bar.high / ratio,
+                    "low": bar.low / ratio,
+                    "close": bar.close / ratio,
+                    "volume": bar.volume * ratio,
+                }
+            )
+            if ratio != 1
+            else bar
+        )
+    return adjusted
 
 
 class DataView:

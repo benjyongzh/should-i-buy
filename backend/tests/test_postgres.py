@@ -13,8 +13,16 @@ from sqlalchemy.orm import sessionmaker
 from app.backtesting.engine import ENGINE_VERSION
 from app.core.config import settings
 from app.market_data.demo import synthetic_demo
-from app.models.entities import BacktestRun, Dataset, Profile, Strategy, StrategyVersion
-from app.schemas.domain import ProfileConfig, canonical_hash, default_strategy
+from app.models.entities import (
+    BacktestRun,
+    ContextSnapshot,
+    Dataset,
+    Profile,
+    Strategy,
+    StrategyInputRevision,
+    StrategyVersion,
+)
+from app.schemas.domain import ProfileConfig, TradingPolicy, canonical_hash, default_strategy
 from app.services.datasets import import_dataset
 from app.services.jobs import claim, process_one
 
@@ -40,16 +48,48 @@ def test_postgres_migrations_immutable_inputs_and_concurrent_claims(monkeypatch)
         command.upgrade(config, "head")
         command.check(config)
         with factory() as db:
+            snapshot = ContextSnapshot(
+                series_id="VIX", content_hash="test-context-hash", payload={}
+            )
+            db.add(snapshot)
+            db.commit()
+            snapshot.series_id = "DGS10"
+            with pytest.raises(DatabaseError, match="Immutable"):
+                db.commit()
+            db.rollback()
+            db.delete(snapshot)
+            with pytest.raises(DatabaseError, match="Immutable"):
+                db.commit()
+            db.rollback()
+        with factory() as db:
+            source = StrategyInputRevision(
+                kind="events", content_hash="test-strategy-source-hash", payload={}
+            )
+            db.add(source)
+            db.commit()
+            source.kind = "universe"
+            with pytest.raises(DatabaseError, match="Immutable"):
+                db.commit()
+            db.rollback()
+            db.delete(source)
+            with pytest.raises(DatabaseError, match="Immutable"):
+                db.commit()
+            db.rollback()
+        with factory() as db:
             data = synthetic_demo()
             data.bars, data.fx = data.bars[:5], data.fx[:5]
             dataset = import_dataset(db, data)
+            funded_config = default_strategy()
+            funded_config.trading = TradingPolicy(allow_additions=True)
             strategy = Strategy(
-                name="PG concurrency test", draft=default_strategy().model_dump(mode="json")
+                name="PG concurrency test", draft=funded_config.model_dump(mode="json")
             )
             profile = Profile(
                 name="PG profile",
                 config=ProfileConfig(
-                    start_date=data.bars[0].session_date, end_date=data.bars[-1].session_date
+                    monthly_contribution="500",
+                    start_date=data.bars[0].session_date,
+                    end_date=data.bars[-1].session_date,
                 ).model_dump(mode="json"),
             )
             db.add_all([strategy, profile])
@@ -89,6 +129,7 @@ def test_postgres_migrations_immutable_inputs_and_concurrent_claims(monkeypatch)
             run = db.get(BacktestRun, claimed[0][0])
             assert run.status == "completed", run.error
             assert len(run.result["equity"]) == 5
+            assert run.result["metrics"]["total_contributions"] == "500"
         with factory() as db:
             row = db.get(Dataset, dataset_id)
             row.name = "Not allowed"

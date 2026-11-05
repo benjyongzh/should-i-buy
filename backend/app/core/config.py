@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     llm_api_key: SecretStr = SecretStr("")
     alpaca_api_key: SecretStr = SecretStr("")
     alpaca_secret_key: SecretStr = SecretStr("")
+    fred_api_key: SecretStr = SecretStr("")
+    benzinga_api_key: SecretStr = SecretStr("")
     worker_poll_seconds: float = 2
     worker_lease_seconds: int = 120
     worker_max_run_seconds: int = 1800

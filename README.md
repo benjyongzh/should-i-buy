@@ -1,6 +1,15 @@
 # Trading Lab
 
-A self-hosted, single-user US equity/ETF research platform. Create declarative strategies, publish immutable versions, configure shared financial assumptions, run chronological daily backtests, and compare performance. No brokerage execution is implemented.
+A self-hosted, single-user US equity/ETF research platform. Create declarative strategies, publish immutable versions, configure shared financial assumptions, run chronological daily/intraday historical backtests, and compare performance. No brokerage execution is implemented.
+
+Strategy rules support RSI, EMA/SMA, volume, MACD, stochastic and explicitly reviewed external observations such as macro series. Read [strategy inputs](docs/strategy-inputs.md) for timestamped source import, immutable review revisions and run selection. Adding a signal source does not waive the separate historical FX/corporate-action acceptance requirements.
+
+Engine **2.0.0** adds reviewed intraday execution, historical sector/ranking
+controls, conditional sizes, and publication-gated news, analyst, economic and
+Congress-disclosure rules. Natural-language plans remain reviewed drafts until
+explicit publication. Read [capabilities](docs/strategy-capabilities.md) and the
+[exact data/key checklist](docs/historical-input-checklist.md). These capabilities
+do not supply missing historical observations or original vendor vintages.
 
 ## Start locally
 
@@ -45,7 +54,7 @@ Open [localhost:8080](http://localhost:8080). Compose runs PostgreSQL, a one-sho
 
 To use an existing PostgreSQL instance, set `DATABASE_URL` and use `docker compose -f compose.external.yml up --build -d`; the external configuration has no bundled database. Percent-encode reserved characters in connection URLs. Restrict access through an authenticated reverse proxy or trusted VPN before allowing non-local access. This MVP intentionally has no account/login system.
 
-Docker Desktop with the WSL 2 Linux engine has now been verified on Windows: images build, migrations/health pass, the independent worker processes HTTP-submitted jobs, and stored data/results survive service restart and container recreation. The current 63-case backend suite passes in a disposable Linux container including PostgreSQL. The isolated test stack uses loopback port 18080 and its own volume; see the [Windows verification record and commands](docs/deployment-verification.md). Standalone Ubuntu/external-DB deployment remains unverified.
+Docker deployment is now verified on this Linux homelab as well as in the earlier Windows record. The isolated project uses loopback port 18080 and its own database volume; existing homelab services are untouched. Current checks: 140 backend tests including PostgreSQL, 26 frontend tests/build, Ruff and migration drift pass. Selected reporting/comparison desktop/mobile browser checks also pass. External-database deployment, reboot autostart and backup restoration remain unverified. Use the [pinned isolated deployment commands](docs/verification-linux-2026-11-05.md), rather than default port 8080 on this host.
 
 ## First research workflow
 
@@ -56,6 +65,7 @@ Docker Desktop with the WSL 2 Linux engine has now been verified on Windows: ima
 5. **Results / Compare:** inspect net/gross returns, benchmark, equity, drawdown, fees, orders, trades, signals and ledger. Different input/profile hashes produce a comparison warning.
 6. **Versioning:** change a draft and publish again. Old versions and completed results remain unchanged.
 7. **Optional assistant:** configure `LLM_API_KEY`, `LLM_BASE_URL` and `LLM_MODEL`. Proposals are strictly validated JSON; accepting changes only a draft. Publication is a separate action. Manual authoring works without credentials.
+8. **Continuous research:** use 2018–2025 as the full development period, retain every run/version, and inspect year/quarter/month breakdowns in Run details. Periods carry the continuous portfolio forward instead of resetting capital. **Market context** stores separate immutable VIX, rates, inflation, unemployment, oil and FX source snapshots for analysis; these are not trading inputs. See [continuous research and current source evidence](docs/continuous-research.md).
 
 For an explicitly synthetic, end-to-end 2019–2022 demonstration:
 
@@ -89,12 +99,12 @@ Automated tests require no market-data or LLM credentials. Backend tests clear i
 
 ## Architecture and feature status
 
-The mandatory [Milestone 3 correctness gate](docs/milestone-3-review.md) runs before strategy-editor work and after material engine changes. Independent review found and corrected five defects in engine 1.1.0. Use engine 1.2.0 for fresh runs; previously completed results retain their original assumptions and need to be rerun to apply corrections.
+The mandatory [Milestone 3 correctness gate](docs/milestone-3-review.md) runs before strategy-editor work and after material engine changes. Engine **2.0.0** passed independent financial/causal review before its timing/source editor changes and is deployed for fresh runs. Engine 1.4.0 funding and daily behavior remains on the legacy path. Four full financial baselines still match 1.2.0 exactly; legacy configuration/profile hashes also match 1.3.0. Completed results retain their original assumptions and are never rewritten.
 
 React/TypeScript/Vite/Tailwind + TanStack Query/Router/Recharts → FastAPI/Pydantic → SQLAlchemy/Alembic/PostgreSQL. The Python worker uses transactional row claiming, ownership tokens, progress/heartbeat leases, cancellation and visible stale-job failures. Strategies have no network, filesystem, arbitrary Python or unrestricted data access.
 
 See [architecture](docs/architecture.md), [data model](docs/data-model.md), [strategy DSL](docs/strategy-schema.md), [event ordering and accounting](docs/backtesting-engine.md), [data isolation](docs/point-in-time-data.md), [provider notes](docs/data-providers.md), [milestone verification](docs/verification.md), and [known limitations](docs/known-limitations.md).
 
-Implemented through the synthetic MVP workflow, including verified Docker Desktop deployment/persistence on Windows. Supplied paper credentials now authenticate successfully and import 1,259 real SPY SIP bars for 2018–2022; that revision remains unreviewed and blocked from backtesting until FX/actions are complete. Live LLM authoring is blocked by exhausted OpenAI API credit. Complete real historical backtest acceptance remains outstanding. No fabricated real-data returns or live trading are included.
+Implemented through the MVP workflow, isolated Linux Docker verification and live LLM generation/modification. A reviewed SPY revision supports real 2018–2025 buy/hold, SMA20/50 and RSI14 runs under engine 1.3, with exact repeats and independent financial reconciliation. [Measured returns and source limits](docs/real-spy-acceptance-2026-11-05.md) disclose 95% entry sizing and lagged reference FX. Engine 1.4 adds [trade timing, sizing and monthly funding](docs/funding-and-trade-controls.md): **183 backend/PostgreSQL and 31 frontend tests pass**, with separate real Q1-2019 funded smoke runs/repeats and [independent reconciliation](docs/funding-verification-2026-11-05.md). The [performance timeline](docs/performance-timeline.md) links account curves to saved decisions and overlays versions/strategies with cash and buy-and-hold references. QQQ/SMH/XLE still require action reviews. No live trading is included.
 
 The [deployment and real-data runbook](docs/deployment-verification.md) records current checks, credentials to configure locally, a free-first source plan and isolated Docker verification commands that avoid existing homelab databases and ports.

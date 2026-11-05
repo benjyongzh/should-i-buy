@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useLab, useResults } from '../lib/api'
+import { useCashBenchmarks, useLab, useResults } from '../lib/api'
 import { Badge, Empty, ErrorBox, money, number, PageTitle, Panel, percent } from '../components/ui'
-import { EquityChart } from '../components/EquityChart'
+import { PerformanceTimeline } from '../components/PerformanceTimeline'
+import { comparisonKey, marketBenchmarkName } from '../lib/timeline'
 
 export function Compare() {
   const lab = useLab()
@@ -15,6 +16,7 @@ export function Compare() {
     (r) => ids.includes(r.id) || (experiment && r.experiment_id === experiment),
   )
   const results = useResults(selected)
+  const cash = useCashBenchmarks(selected)
   const comparable =
     new Set(
       selected.map(
@@ -23,7 +25,11 @@ export function Compare() {
           ':' +
           r.provenance.profile_hash +
           ':' +
-          r.provenance.engine_version,
+          r.provenance.engine_version +
+          ':' +
+          (r.provenance.external_input_hash || '') +
+          ':' +
+          (r.provenance.strategy_input_hash || ''),
       ),
     ).size <= 1
   const label = (id: string) => {
@@ -36,6 +42,28 @@ export function Compare() {
       (a, b) =>
         Number(b.result?.metrics[sort] ?? -Infinity) - Number(a.result?.metrics[sort] ?? -Infinity),
     )
+  const uniqueReferences = [
+    ...new Map(
+      selected.map((r, i) => [
+        comparisonKey(r),
+        { run: r, result: results[i]?.data, cash: cash[i]?.data },
+      ]),
+    ).values(),
+  ]
+  const references = uniqueReferences.flatMap((row) => [
+    ...(row.result?.benchmark
+      ? [
+          {
+            name: marketBenchmarkName(row.run),
+            run: row.run,
+            metrics: row.result.benchmark.metrics,
+          },
+        ]
+      : []),
+    ...(row.cash?.metrics
+      ? [{ name: 'Cash only · zero interest', run: row.run, metrics: row.cash.metrics }]
+      : []),
+  ])
   return (
     <>
       <PageTitle
@@ -43,7 +71,7 @@ export function Compare() {
         title="Understand the trade-offs."
         description="Compare returns, risk, and execution costs together. Historical winners are research, not a forecast."
       />
-      <ErrorBox error={results.find((r) => r.error)?.error} />
+      <ErrorBox error={results.find((r) => r.error)?.error || cash.find((r) => r.error)?.error} />
       <Panel title="Select completed runs">
         <label className="field">
           <span>Experiment group</span>
@@ -91,8 +119,8 @@ export function Compare() {
       </Panel>
       {!comparable && (
         <div className="warning">
-          These runs use different profile settings or dataset revisions. They are not strictly
-          comparable; review the disclosed assumptions below.
+          These runs use different profile settings, dataset revisions, engine versions or external
+          inputs. They are not strictly comparable; review the disclosed assumptions below.
         </div>
       )}
       {selected.some((r) => r.provenance.synthetic) && (
@@ -103,15 +131,20 @@ export function Compare() {
       )}
       {selected.length > 0 && (
         <>
-          <Panel title="Net equity curves">
-            <EquityChart
-              series={selected.flatMap((r, i) =>
-                results[i]?.data
-                  ? [{ name: label(r.strategy_version_id), equity: results[i].data!.equity }]
-                  : [],
-              )}
-            />
-          </Panel>
+          <PerformanceTimeline
+            entries={selected.flatMap((r, i) =>
+              results[i]?.data
+                ? [
+                    {
+                      run: r,
+                      name: `${label(r.strategy_version_id)} · ${r.id.slice(0, 8)}`,
+                      result: results[i].data!,
+                      cash: cash[i]?.data,
+                    },
+                  ]
+                : [],
+            )}
+          />
           <Panel
             title="Performance comparison"
             action={
@@ -167,6 +200,30 @@ export function Compare() {
                         {money(
                           d?.metrics.total_commissions,
                           String(r.profile_snapshot.account_currency),
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {references.map((reference) => (
+                    <tr key={`${reference.name}:${reference.run.id}`}>
+                      <td>
+                        <strong>{reference.name}</strong>
+                        <small>Reference · {reference.run.id.slice(0, 8)} assumptions</small>
+                      </td>
+                      <td>
+                        {money(
+                          reference.metrics.ending_equity,
+                          String(reference.run.profile_snapshot.account_currency),
+                        )}
+                      </td>
+                      <td>{percent(reference.metrics.total_return)}</td>
+                      <td>{percent(reference.metrics.max_drawdown)}</td>
+                      <td>{number(reference.metrics.sharpe_ratio)}</td>
+                      <td>{String(reference.metrics.executed_orders ?? '—')}</td>
+                      <td>
+                        {money(
+                          reference.metrics.total_commissions,
+                          String(reference.run.profile_snapshot.account_currency),
                         )}
                       </td>
                     </tr>

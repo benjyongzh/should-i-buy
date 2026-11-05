@@ -1,5 +1,23 @@
 # Data providers and contracts
 
+## Additional historical strategy sources — engine 2.0.0
+
+**Strategy sources** prepares Alpaca raw intraday and company-news partitions and
+optional Benzinga individual analyst ratings, with immutable raw retention and
+explicit separate review. JSON/CSV contracts also cover historical security
+states, global/economic events and Congress disclosures. No Congress scraper or
+comprehensive original-vintage news archive is configured. Existing Alpaca/FRED/LLM
+keys remain server-side; optional `BENZINGA_API_KEY` is only needed for that direct
+ratings adapter. Files need no additional key. Current vendor records may be
+revised and do not prove complete original historical coverage. See the
+[exact source/key checklist](historical-input-checklist.md).
+
+Latest2026-11-05 result: a reviewed combined SPY revision now contains2,514 raw SIP bars,2,494 initial-release FX values and40 issuer dividends. Three strategies completed2018–2025 and supplemental2019–2022, with exact repeats and independent financial reconciliation. [Acceptance evidence](real-spy-acceptance-2026-11-05.md) explains the corrected FX availability, original pre-US-open USD notices, US-date authority and bounded reference-FX/vintage assumptions. QQQ/SMH/XLE still require action reviews. Earlier diagnostic paragraphs below preserve their then-unreviewed state and do not describe the new SPY revision.
+
+Earlier source additions: separate raw SPY/QQQ/SMH/XLE SIP revisions cover2016–2025, and nine immutable context series cover VIX, Treasury yields, Fed funds, CPI, unemployment, oil and reference FX. Those viewing-only imports remain separate from accounting datasets; a later explicit review can create strategy-eligible external snapshots with known publication times. See [continuous research](continuous-research.md) and [strategy inputs](strategy-inputs.md).
+
+Current 2026-11-05 integration evidence: the Linux project re-imported all 1,259 SPY SIP bars successfully with the same content hash reported below. Live LLM generation/modification also passes. See [current verification](verification-linux-2026-11-05.md) for current IDs, credential requirements and remaining FX/action blockers; earlier Windows `.local` artifacts referenced below are absent in this checkout.
+
 ## CSV
 
 Upload UTF-8 CSV content, not filesystem paths. Paths cannot escape the repository/server. All records are validated before a transaction commits. Duplicate candles, malformed rows/headers, naive timestamps, invalid OHLC, nonpositive prices, negative volumes, non-session dates and premature daily availability are rejected. Coverage/gaps are recorded, never filled. Maxima: 100,000 candles, 30,000 FX observations, 10,000 actions, 25 MB request body (configurable server limits).
@@ -48,6 +66,8 @@ Do not substitute adjusted-close downloads for raw OHLCV plus actions: that can 
 
 ## Historical USD/SGD: publication timing matters
 
+2026-11-05 update: live FRED v1 initial-release retrieval now succeeds. A standalone preparation script and private candidate CSV exist; no FX revision has been accepted/imported. Source reconciliation flags and measured freshness (seven days fails; 14 days passes for this candidate) are in [fx-data-review.md](fx-data-review.md). The key is read from the preparation process, not an app setting. The assessment/procedure below remains relevant, but statements that full extraction has not started are superseded by this audit.
+
 The free candidate is Federal Reserve **[DEXSIUS](https://fred.stlouisfed.org/series/DEXSIUS)** via **ALFRED vintages**, not an ordinary latest-value FRED CSV. Units are SGD per USD, matching the ledger. The series is daily observations of noon New York buying rates; the [Fed publishes the previous week's daily observations with its weekly H.10 release](https://www.federalreserve.gov/feeds/h10.html), generally Monday at 16:15 ET. Observation date is therefore not availability date.
 
 The [FRED observations API](https://fred.stlouisfed.org/docs/api/fred/series_observations.html) requires a free registered API key and supports initial-release-only output (`output_type=4`) and explicitly bounded real-time periods. Its default real-time period is today. The [real-time-period documentation](https://fred.stlouisfed.org/docs/api/fred/realtime_period.html) explains why latest revised history differs from as-known history. Inspect actual 2018–2022 vintage coverage before calling this source accepted.
@@ -60,10 +80,18 @@ Preparation procedure:
 4. Inspect FX age at every engine clock. Weekly publication can make the latest known observation older than the default seven-day limit. The existing profile supports up to 14 days; select it explicitly only after reviewing the actual gaps and acknowledging a lagged reference-rate model. No future backfill, daily interpolation or unlimited carry-forward is allowed.
 5. Import the normalized `observed_at,available_at,rate` CSV with equity/actions in one revision and record the FX policy/source in combined provenance. This candidate is free and auditable, but stale reference rates are not historical executable conversion quotes. An API credential does not resolve that modeling compromise.
 
-The **[ECB reference rates](https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html)** are a keyless alternative for assessment: compute SGD/USD as `(SGD per EUR)/(USD per EUR)` using the same reference date. ECB publishes around 16:00 CET on working days and discourages transaction use. A latest historical download does not prove original vintages or exact availability. Do not substitute it into the acceptance dataset until archival/publication and revision assumptions are established. Neither free option has yet been imported or certified against the engine's required timestamps.
+An additional keyless route was confirmed on 2026-11-05: [the Fed's January 7, 2019 archived release](https://www.federalreserve.gov/releases/h10/20190107/) includes the preceding week's daily Singapore rates, its release date and explicit missing-value markers. A FRED key is therefore needed for the FRED API workflow, not for every possible FX-source workflow. Full archive extraction, coverage and publication-time review remain pending; this single inspected release is not an accepted FX dataset.
+
+The **[ECB reference rates](https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html)** are another keyless alternative for assessment: compute SGD/USD as `(SGD per EUR)/(USD per EUR)` using the same reference date. ECB publishes around 16:00 CET on working days and discourages transaction use. A latest historical download does not prove original vintages or exact availability. Do not substitute it into the acceptance dataset until archival/publication and revision assumptions are established. No FX candidate has yet been imported or certified against the engine's required timestamps.
 
 ## SPY corporate-action review
 
-Use the US [State Street historical distributions and distribution schedule](https://www.ssga.com/us/en/intermediary/resources/documents/etf-dividend-distributions) as the primary issuer starting point, with original dated announcements for historical knowledge. The page provides historical XLSX and schedule PDF downloads; the linked files' actual 2018–2022 coverage and declaration timing still need inspection. Do not use Australian SPY CDI distribution dates. Review all splits as well as dividends; a dividend file is not evidence of split completeness. Alpaca/Tiingo corporate-action products may help cross-check, but their historical coverage, entitlement and timing must be verified rather than assumed.
+Indicator/external-input follow-up: MACD, stochastic, RSI, EMA and volume use existing OHLCV without a new key. Reviewed FRED snapshots or timestamped CSV sources can now drive signals through frozen revisions; they remain separate from accounting FX/actions. Fear & Greed has no qualified automatic feed configured. Its CSV path requires permitted US equity index history with defensible publication metadata; current VIX's unknown original timestamps prevent strategy approval. See [source workflow](strategy-inputs.md). No new provider subscription is required for the implemented capability.
+
+Live Alpaca action testing is now recorded in [corporate-action-source-check.md](corporate-action-source-check.md): HTTP 200 with existing credentials. For 2018–2022, 19/20 issuer dividends were returned, seven payment dates were missing and one amount had a USD 0.0000001/share discrepancy. For 2022–2025, all 16 issuer dividends matched in amount/payment date. No declaration timestamps or split records were returned. This is corroboration, not complete point-in-time certification; no action data was imported as reviewed.
+
+Use the US [State Street historical distributions and distribution schedule](https://www.ssga.com/us/en/intermediary/resources/documents/etf-dividend-distributions) as the primary issuer starting point, with original dated announcements for historical knowledge. The page provides historical XLSX and schedule PDF downloads; the workbook's 2018–2022 coverage was inspected as recorded below, while historical declaration timing remains unresolved. Do not use Australian SPY CDI distribution dates. Review all splits as well as dividends; a dividend file is not evidence of split completeness. Alpaca/Tiingo corporate-action products may help cross-check, but their historical coverage, entitlement and timing must be verified rather than assumed.
+
+On 2026-11-05 the historical XLSX was downloaded and inspected: 20 SPY distribution records cover 2018–2022 with amounts and ex/record/payable dates, including the December 2022 payment in January 2023. The workbook contains no declaration timestamps or split-history fields. The current schedule PDF concerns 2026, so it cannot establish the historical declaration clock. Full source reconciliation and pre-open availability evidence remain outstanding.
 
 Keep source files, declaration evidence, ex-date, record date (for reconciliation), payment date, amount, split ratio, transformation notes and a review log. A date-only same-day announcement is insufficient to assert knowledge before the effective open. Do not fabricate an earlier timestamp, missing payment date, zero dividend or no-split attestation. Price-only data cannot certify total-return acceptance. See [the deployment/integration runbook](deployment-verification.md) for UI steps, required credentials and the pending independent fill/accounting audit.

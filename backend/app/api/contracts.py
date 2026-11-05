@@ -34,6 +34,8 @@ class Schedule(StrictModel):
     dataset_id: str
     experiment_name: str = Field(default="", max_length=160)
     acknowledge_synthetic: bool = False
+    context_snapshot_ids: list[str] = Field(default_factory=list, max_length=20)
+    strategy_input_ids: list[str] = Field(default_factory=list, max_length=100)
 
 
 class CSVImport(StrictModel):

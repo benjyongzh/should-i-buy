@@ -26,7 +26,11 @@ const mock = vi.hoisted(() => ({
     error: null,
   },
 }))
-vi.mock('../lib/api', () => ({ api: mock.api, useLab: () => mock.lab }))
+vi.mock('../lib/api', () => ({
+  api: mock.api,
+  useLab: () => mock.lab,
+  useCashBenchmarks: () => [],
+}))
 vi.mock('../components/EquityChart', () => ({
   EquityChart: () => <div aria-label="Equity chart fixture" />,
 }))
@@ -76,6 +80,57 @@ beforeEach(() => {
   mock.api.mockResolvedValue([])
 })
 afterEach(cleanup)
+it('reviews an LLM interpretation before draft acceptance and blocks unsupported proposals', async () => {
+  const user = userEvent.setup()
+  let blocked = false
+  const saved = {
+    id: 's1',
+    name: 'Saved assistant draft',
+    description: '',
+    draft: defaultStrategy,
+    draft_revision: 1,
+  }
+  mock.api.mockImplementation(async (path: string) => {
+    if (path === '/llm/plan-strategy')
+      return {
+        id: 'proposal',
+        config: blocked ? {} : defaultStrategy,
+        metadata_json: {
+          model: 'fixture',
+          prompt_version: 'v3',
+          blocked,
+          interpretation: 'Buy only after one hour from exchange open',
+          data_requirements: ['Reviewed intraday prices'],
+          unsupported_requests: blocked ? ['Live execution is unavailable'] : [],
+        },
+      }
+    if (path.endsWith('/versions')) return []
+    return saved
+  })
+  wrap(
+    <Routes>
+      <Route path="/strategies/:id" element={<StrategyEditor />} />
+    </Routes>,
+    '/strategies/s1',
+  )
+  await screen.findByDisplayValue(saved.name)
+  await user.type(screen.getByLabelText('Strategy assistant prompt'), 'Buy an hour after opening')
+  await user.click(screen.getByRole('button', { name: 'Propose changes' }))
+  await screen.findByText('Reviewed intraday prices')
+  const accept = screen.getByRole('button', { name: 'Accept into draft' })
+  expect(accept).toBeDisabled()
+  await user.click(screen.getByLabelText(/I reviewed the interpretation/))
+  await user.click(accept)
+  await waitFor(() =>
+    expect(mock.api).toHaveBeenCalledWith('/llm/proposals/proposal/accept', 'POST'),
+  )
+  expect(mock.api.mock.calls.some((call) => String(call[0]).endsWith('/publish'))).toBe(false)
+  blocked = true
+  await user.click(screen.getByRole('button', { name: 'Propose changes' }))
+  await screen.findByText('Live execution is unavailable')
+  await user.click(screen.getByLabelText(/I reviewed the interpretation/))
+  expect(screen.getByRole('button', { name: 'Accept into draft' })).toBeDisabled()
+})
 it('displays persisted results and filters execution records', async () => {
   const user = userEvent.setup()
   const result = {
@@ -248,16 +303,66 @@ it('saves editable shared financial assumptions', async () => {
   const capital = await screen.findByDisplayValue('10000')
   await user.clear(capital)
   await user.type(capital, '12000')
+  const contribution = screen.getByLabelText('Monthly contribution (account currency)')
+  await user.clear(contribution)
+  await user.type(contribution, '500')
   await user.click(screen.getByRole('button', { name: 'Save profile' }))
   await waitFor(() =>
     expect(mock.api).toHaveBeenCalledWith(
       '/backtest-profiles',
       'POST',
       expect.objectContaining({
-        config: expect.objectContaining({ starting_capital: '12000', fixed_fee: '2.50' }),
+        config: expect.objectContaining({
+          starting_capital: '12000',
+          fixed_fee: '2.50',
+          monthly_contribution: '500',
+        }),
       }),
     ),
   )
+})
+
+it('saves DCA timing, cash sizing and partial exits as an unpublished draft', async () => {
+  const user = userEvent.setup()
+  mock.api.mockResolvedValue({
+    id: 's1',
+    name: 'Monthly DCA',
+    description: '',
+    draft: defaultStrategy,
+    draft_revision: 1,
+  })
+  wrap(
+    <Routes>
+      <Route path="/strategies/:id" element={<StrategyEditor />} />
+    </Routes>,
+    '/strategies/new',
+  )
+  await user.type(screen.getByRole('textbox', { name: 'Strategy name' }), 'Monthly DCA')
+  await user.selectOptions(screen.getByLabelText('Sizing method'), 'cash_percent')
+  await user.selectOptions(screen.getByLabelText('Entry decision schedule'), 'monthly')
+  await user.selectOptions(screen.getByLabelText('Allow additions to held positions'), 'true')
+  const fraction = screen.getByLabelText('Exit fraction')
+  await user.clear(fraction)
+  await user.type(fraction, '0.25')
+  await user.click(screen.getByRole('button', { name: 'Save draft' }))
+  await waitFor(() =>
+    expect(mock.api).toHaveBeenCalledWith(
+      '/strategies',
+      'POST',
+      expect.objectContaining({
+        config: expect.objectContaining({
+          sizing: { mode: 'cash_percent', value: 0.1 },
+          trading: {
+            entry_schedule: 'monthly',
+            exit_schedule: 'daily',
+            allow_additions: true,
+            exit_fraction: '0.25',
+          },
+        }),
+      }),
+    ),
+  )
+  expect(mock.api.mock.calls.some(([path]) => String(path).endsWith('/publish'))).toBe(false)
 })
 it('requires explicit synthetic acknowledgement before scheduling', async () => {
   const user = userEvent.setup()
@@ -303,6 +408,51 @@ it('loads a labeled demonstration only on explicit request', async () => {
   expect(mock.api).not.toHaveBeenCalled()
   await user.click(screen.getByRole('button', { name: 'Load labeled synthetic dataset' }))
   await waitFor(() => expect(mock.api).toHaveBeenCalledWith('/market-data/demo', 'POST'))
+})
+it('pins only reviewed external revisions and acknowledges synthetic inputs even with historical prices', async () => {
+  const user = userEvent.setup()
+  mock.lab.strategies = [{ id: 's1', name: 'External fixture', archived: false }]
+  mock.lab.versions = [{ id: 'v1', strategy_id: 's1', number: 1, config_hash: 'abc' }]
+  mock.lab.profiles = [profile]
+  mock.lab.datasets = [
+    {
+      id: 'd1',
+      name: 'Price fixture',
+      synthetic: false,
+      content_hash: '12345678',
+      metadata_json: { fx_observations: 1, coverage: {} },
+    },
+  ]
+  mock.api.mockImplementation(async (path: string) =>
+    path === '/research/context'
+      ? [
+          { id: 'raw', series_id: 'UNREVIEWED', research_only: true, content_hash: 'a'.repeat(64) },
+          {
+            id: 'approved',
+            series_id: 'FEAR_GREED_US',
+            research_only: false,
+            synthetic: true,
+            content_hash: 'b'.repeat(64),
+          },
+        ]
+      : [{ id: 'r1', experiment_id: 'e1' }],
+  )
+  wrap(<NewBacktest />)
+  await user.click(screen.getByRole('checkbox', { name: /Version 1/ }))
+  await user.selectOptions(screen.getByLabelText('Backtest profile'), 'p1')
+  await user.selectOptions(screen.getByLabelText('Dataset revision'), 'd1')
+  expect(screen.queryByText('UNREVIEWED', { exact: false })).not.toBeInTheDocument()
+  await user.click(await screen.findByRole('checkbox', { name: /FEAR_GREED_US/ }))
+  expect(screen.getByRole('button', { name: 'Queue backtests' })).toBeDisabled()
+  await user.click(screen.getByRole('checkbox', { name: /I understand/ }))
+  await user.click(screen.getByRole('button', { name: 'Queue backtests' }))
+  await waitFor(() =>
+    expect(mock.api).toHaveBeenCalledWith(
+      '/backtests',
+      'POST',
+      expect.objectContaining({ context_snapshot_ids: ['approved'], acknowledge_synthetic: true }),
+    ),
+  )
 })
 
 it('imports the selected Alpaca feed and explicit dividend attestation', async () => {

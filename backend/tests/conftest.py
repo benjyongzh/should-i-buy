@@ -16,7 +16,14 @@ from app.schemas.domain import Bar, DatasetInput, FXObservation
 @pytest.fixture(autouse=True)
 def isolate_external_providers(monkeypatch):
     """Developer credentials must never enable live providers during automated tests."""
-    for variable in ("ALPACA_API_KEY", "ALPACA_SECRET_KEY", "LLM_API_KEY", "LLM_MODEL"):
+    for variable in (
+        "ALPACA_API_KEY",
+        "ALPACA_SECRET_KEY",
+        "LLM_API_KEY",
+        "LLM_MODEL",
+        "FRED_API_KEY",
+        "BENZINGA_API_KEY",
+    ):
         monkeypatch.setenv(variable, "")
     settings.cache_clear()
 

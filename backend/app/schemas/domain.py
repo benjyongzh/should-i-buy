@@ -5,7 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 
 class StrictModel(BaseModel):
@@ -35,13 +35,115 @@ class Indicator(StrictModel):
     field: Literal["open", "high", "low", "close", "volume"] = "close"
 
 
+class MACD(StrictModel):
+    type: Literal["macd"]
+    component: Literal["line", "signal", "histogram"] = "histogram"
+    fast_period: int = Field(default=12, ge=2, le=500)
+    slow_period: int = Field(default=26, ge=3, le=500)
+    signal_period: int = Field(default=9, ge=2, le=500)
+    field: Literal["open", "high", "low", "close"] = "close"
+
+    @model_validator(mode="after")
+    def periods(self):
+        if self.fast_period >= self.slow_period:
+            raise ValueError("MACD fast period must be smaller than slow period")
+        return self
+
+
+class Stochastic(StrictModel):
+    type: Literal["stochastic"]
+    component: Literal["k", "d"] = "k"
+    period: int = Field(default=14, ge=2, le=500)
+    smooth_k: int = Field(default=3, ge=1, le=100)
+    smooth_d: int = Field(default=3, ge=1, le=100)
+
+
+class External(StrictModel):
+    type: Literal["external"]
+    series_id: str = Field(pattern=r"^[A-Z][A-Z0-9_]{0,31}$")
+    max_age_days: int = Field(default=7, ge=1, le=366)
+
+
 class Multiply(StrictModel):
     type: Literal["multiply"]
     left: Numeric
     right: Numeric
 
 
-Numeric = Annotated[Constant | Price | Indicator | Multiply, Field(discriminator="type")]
+class Market(StrictModel):
+    type: Literal["market"]
+    timeframe: Literal["daily", "intraday"]
+    expression: Numeric
+
+
+class EventValue(StrictModel):
+    type: Literal["event"]
+    stream_id: str = Field(pattern=r"^[A-Z][A-Z0-9_]{0,31}$")
+    categories: list[str] = Field(default_factory=list, max_length=20)
+    scope: Literal["global", "symbol", "sector"] = "global"
+    measure: Literal["count", "sum_score", "latest_score"] = "count"
+    lookback_minutes: int = Field(default=1440, ge=1, le=527040)
+    access: Literal["public_only", "any_licensed"] = "public_only"
+    actors: list[str] = Field(default_factory=list, max_length=30)
+    value_field: Literal[
+        "score",
+        "analyst_target_after",
+        "congress_amount_min",
+        "congress_amount_max",
+        "economic_actual",
+        "economic_surprise",
+    ] = "score"
+
+
+class Arithmetic(StrictModel):
+    type: Literal["arithmetic"]
+    op: Literal["add", "subtract", "divide", "min", "max"]
+    left: Numeric
+    right: Numeric
+
+
+class CorporateValue(StrictModel):
+    type: Literal["corporate_action"]
+    kind: Literal["split", "dividend"]
+    window: Literal["announced_past", "effective_next", "effective_past"] = "effective_next"
+    days: int = Field(default=7, ge=0, le=366)
+    measure: Literal["count", "sum_value"] = "count"
+
+
+class PortfolioValue(StrictModel):
+    type: Literal["portfolio"]
+    field: Literal["cash", "equity", "position_quantity", "position_weight", "holding_sessions"]
+
+
+class CalendarValue(StrictModel):
+    type: Literal["calendar"]
+    field: Literal[
+        "minutes_after_open",
+        "minutes_before_close",
+        "weekday",
+        "day_of_month",
+        "month",
+        "year",
+        "session_of_month",
+    ]
+
+
+Numeric = Annotated[
+    Constant
+    | Price
+    | Indicator
+    | MACD
+    | Stochastic
+    | External
+    | Multiply
+    | Arithmetic
+    | Market
+    | EventValue
+    | CorporateValue
+    | PortfolioValue
+    | CalendarValue,
+    Field(discriminator="type"),
+]
 
 
 class Compare(StrictModel):
@@ -67,19 +169,30 @@ class Always(StrictModel):
 
 
 Condition = Annotated[Compare | Group | Negate | Always, Field(discriminator="type")]
-for _model in (Multiply, Group, Negate):
+for _model in (Multiply, Arithmetic, Market, Group, Negate):
     _model.model_rebuild()
 
 
 class Sizing(StrictModel):
-    mode: Literal["equity_percent", "fixed_notional"] = "equity_percent"
-    value: Positive = Decimal("0.1")
+    mode: Literal["equity_percent", "fixed_notional", "cash_percent", "target_allocation"] = (
+        "equity_percent"
+    )
+    value: Money = Decimal("0.1")
 
     @model_validator(mode="after")
     def percentage(self):
-        if self.mode == "equity_percent" and self.value > 1:
-            raise ValueError("equity_percent value must be <= 1")
+        if self.mode != "fixed_notional" and self.value > 1:
+            raise ValueError("percentage sizing value must be <= 1")
+        if self.mode != "target_allocation" and self.value == 0:
+            raise ValueError("order sizing value must be positive")
         return self
+
+
+class TradingPolicy(StrictModel):
+    entry_schedule: Literal["daily", "weekly", "monthly", "once"] = "daily"
+    exit_schedule: Literal["daily", "weekly", "monthly"] = "daily"
+    allow_additions: bool = False
+    exit_fraction: Decimal = Field(default=Decimal(1), gt=0, le=1)
 
 
 class Risk(StrictModel):
@@ -89,12 +202,63 @@ class Risk(StrictModel):
     take_profit: Fraction | None = None
 
 
+class TradingWindow(StrictModel):
+    start_minutes_after_open: int = Field(default=0, ge=0, le=389)
+    end_minutes_before_close: int = Field(default=0, ge=0, le=389)
+
+
+class ExecutionPolicy(StrictModel):
+    decision_cadence: Literal["daily_close", "bar_close", "event_or_bar"] = "daily_close"
+    default_timeframe: Literal["daily", "intraday"] = "daily"
+    entry_window: TradingWindow = Field(default_factory=TradingWindow)
+    exit_window: TradingWindow = Field(default_factory=TradingWindow)
+    pending_expiry: Literal["session_close", "good_until_cancelled"] = "session_close"
+
+
+class UniversePolicy(StrictModel):
+    require_membership: bool = True
+    include_symbols: list[Symbol] = Field(default_factory=list, max_length=50)
+    exclude_symbols: list[Symbol] = Field(default_factory=list, max_length=50)
+    sectors: list[str] = Field(default_factory=list, max_length=30)
+    exclude_sectors: list[str] = Field(default_factory=list, max_length=30)
+    prefer_sectors: list[str] = Field(default_factory=list, max_length=30)
+    filter: Condition = Field(default_factory=lambda: Always(type="always", value=True))
+    rank_by: Numeric | None = None
+    descending: bool = True
+    top_n: int = Field(default=5, ge=1, le=50)
+    exit_when_ineligible: bool = False
+
+
+class ConditionalSizing(StrictModel):
+    when: Condition
+    sizing: Sizing
+    label: str = Field(min_length=1, max_length=160)
+
+
 class StrategyConfig(StrictModel):
     schema_version: Literal[1] = 1
     entry: Condition
     exit: Condition
     sizing: Sizing = Field(default_factory=Sizing)
     risk: Risk = Field(default_factory=Risk)
+    trading: TradingPolicy | None = None
+    execution_policy: ExecutionPolicy | None = None
+    universe: UniversePolicy | None = None
+    sizing_rules: list[ConditionalSizing] | None = Field(default=None, max_length=20)
+
+    @model_serializer(mode="wrap")
+    def legacy_serialization(self, handler):
+        result = handler(self)
+        for key in ("trading", "execution_policy", "universe", "sizing_rules"):
+            if getattr(self, key) is None:
+                result.pop(key, None)
+        return result
+
+    @model_validator(mode="after")
+    def trading_required(self):
+        if self.sizing.mode in {"cash_percent", "target_allocation"} and self.trading is None:
+            raise ValueError("cash_percent and target_allocation require a trading policy")
+        return self
 
     @model_validator(mode="before")
     @classmethod
@@ -116,13 +280,14 @@ class StrategyConfig(StrictModel):
 
 class ProfileConfig(StrictModel):
     starting_capital: Positive = Decimal("10000")
+    monthly_contribution: Money = Decimal(0)
     account_currency: Literal["SGD", "USD"] = "SGD"
     start_date: date = date(2019, 1, 1)
     end_date: date = date(2022, 12, 31)
     symbols: list[Symbol] = Field(default=["SPY"], min_length=1, max_length=50)
     benchmark: Symbol = "SPY"
     calendar: Literal["XNYS"] = "XNYS"
-    timeframe: Literal["1d"] = "1d"
+    timeframe: Literal["1d", "1min", "5min", "15min", "30min", "60min"] = "1d"
     execution: Literal["next_open"] = "next_open"
     fx_policy: Literal["latest_available"] = "latest_available"
     max_fx_age_days: int = Field(default=7, ge=1, le=14)
@@ -139,6 +304,13 @@ class ProfileConfig(StrictModel):
     max_positions: int = Field(default=5, ge=1, le=100)
     risk_free_rate: Fraction = Decimal("0")
     research_label: Literal["in_sample", "holdout"] = "in_sample"
+
+    @model_serializer(mode="wrap")
+    def legacy_serialization(self, handler):
+        result = handler(self)
+        if not self.monthly_contribution:
+            result.pop("monthly_contribution", None)
+        return result
 
     @model_validator(mode="after")
     def dates(self):
@@ -252,3 +424,11 @@ class OrderRecord(StrictModel):
     fees: Decimal = Decimal(0)
     reason: str
     rejection_reason: str | None = None
+    resolved_at: datetime | None = None
+
+    @model_serializer(mode="wrap")
+    def legacy_serialization(self, handler):
+        result = handler(self)
+        if self.resolved_at is None:
+            result.pop("resolved_at", None)
+        return result

@@ -10,6 +10,8 @@ from app.core.config import settings
 from app.models.entities import BacktestRun, Dataset, StrategyVersion, utcnow
 from app.schemas.domain import ProfileConfig, StrategyConfig, canonical_hash
 from app.services.datasets import load_dataset
+from app.services.feature_inputs import frozen_features
+from app.services.strategy_inputs import frozen_inputs
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +105,11 @@ def process_one(factory) -> str | None:
             if canonical_hash(config.model_dump(mode="json")) != version.config_hash:
                 raise ValueError("strategy configuration hash mismatch")
             profile = ProfileConfig.model_validate(run.profile_snapshot)
-        result = simulate(config, profile, data, checkpoint)
+            features = frozen_features(db, run.provenance)
+            sources = frozen_inputs(db, run.provenance)
+        result = simulate(
+            config, profile, data, checkpoint, feature_data=features, source_data=sources
+        )
         checkpoint(99)
         with factory() as db:
             run = db.scalar(select(BacktestRun).where(BacktestRun.id == run_id).with_for_update())

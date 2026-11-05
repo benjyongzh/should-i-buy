@@ -14,6 +14,7 @@ class Position:
     entry_price: Decimal
     opened_at: datetime
     opened_session: int
+    last_added_session: int | None = None
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,23 @@ class Ledger:
         self.realized_pnl = D(0)
         self.turnover = D(0)
         self.receivables: list[dict] = []
+        self.contributions = D(0)
+
+    def contribute(self, amount: Decimal, timestamp: datetime, equity_before: Decimal):
+        if not amount.is_finite() or amount <= 0:
+            raise ValueError("contribution must be finite and positive")
+        self.cash += amount
+        self.contributions += amount
+        self.events.append(
+            {
+                "kind": "contribution",
+                "timestamp": timestamp.isoformat(),
+                "cash_delta": str(amount),
+                "cash_after": str(self.cash),
+                "equity_before_flow": str(equity_before),
+                "equity_after_flow": str(equity_before + amount),
+            }
+        )
 
     def quantity(self, budget: Decimal, price: Decimal, fx: Decimal) -> Decimal:
         p = self.profile
@@ -80,15 +98,19 @@ class Ledger:
         fx: Decimal,
         timestamp: datetime,
         session_index: int,
+        *,
+        allow_adjustments: bool = False,
     ) -> dict:
         p = self.profile
         quote = self.quote(side, quantity, raw_price, fx)
         if side == "buy" and not p.fractional_shares and quantity != quantity.to_integral_value():
             raise ValueError("fractional order is disabled")
-        if side == "buy" and symbol in self.positions:
+        if side == "buy" and symbol in self.positions and not allow_adjustments:
             raise ValueError("duplicate position")
         if side == "sell" and (
-            symbol not in self.positions or quantity != self.positions[symbol].quantity
+            symbol not in self.positions
+            or quantity > self.positions[symbol].quantity
+            or (not allow_adjustments and quantity != self.positions[symbol].quantity)
         ):
             raise ValueError("sell requires the entire existing position")
         price, notional, fee, fx_cost, cash_delta = (
@@ -103,14 +125,33 @@ class Ledger:
         if notional < p.min_notional:
             raise ValueError("below minimum order notional")
         if side == "buy":
-            if len(self.positions) >= p.max_positions:
+            if symbol not in self.positions and len(self.positions) >= p.max_positions:
                 raise ValueError("maximum concurrent positions")
-            self.positions[symbol] = Position(
-                quantity, -cash_delta, price, timestamp, session_index
-            )
+            if symbol in self.positions:
+                position = self.positions[symbol]
+                position.entry_price = (
+                    position.entry_price * position.quantity + price * quantity
+                ) / (position.quantity + quantity)
+                position.quantity += quantity
+                position.cost_basis -= cash_delta
+                position.last_added_session = session_index
+            else:
+                self.positions[symbol] = Position(
+                    quantity, -cash_delta, price, timestamp, session_index
+                )
         else:
-            position = self.positions.pop(symbol)
-            pnl = cash_delta - position.cost_basis
+            position = self.positions[symbol]
+            basis = (
+                position.cost_basis
+                if quantity == position.quantity
+                else position.cost_basis * quantity / position.quantity
+            )
+            if quantity == position.quantity:
+                del self.positions[symbol]
+            else:
+                position.cost_basis -= basis
+                position.quantity -= quantity
+            pnl = cash_delta - basis
             self.realized_pnl += pnl
             self.trades.append(
                 {
@@ -118,7 +159,7 @@ class Ledger:
                     "quantity": str(quantity),
                     "opened_at": position.opened_at.isoformat(),
                     "closed_at": timestamp.isoformat(),
-                    "cost_basis": str(position.cost_basis),
+                    "cost_basis": str(basis),
                     "net_proceeds": str(cash_delta),
                     "realized_pnl": str(pnl),
                     "holding_sessions": session_index - position.opened_session,

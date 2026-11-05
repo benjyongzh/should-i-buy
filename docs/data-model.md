@@ -1,5 +1,24 @@
 # Data model
 
+## Immutable strategy source revisions
+
+Migration `004_strategy_inputs` adds `strategy_input_revisions` with kind,
+canonical content hash and retained typed payload. PostgreSQL/SQLite triggers
+reject UPDATE/DELETE. Review creates a child with raw parent ID/hash, complete
+coverage attestation and review note. Runs freeze source bindings and an aggregate
+manifest hash alongside existing strategy/profile/dataset/external-series hashes.
+No completed result or published strategy is rewritten. Source events include
+original/version/score clocks, access, typed news/analyst/economic/Congress details
+and amendment lineage. Historical classifications are effective/available state
+transitions with stable instrument identity. See [contracts](strategy-capabilities.md).
+
+Engine 1.4 optional trading policies and profile monthly contributions live in
+existing validated JSON definitions/snapshots; no schema migration is needed.
+Zero contribution/absent policy fields preserve legacy canonical serialization
+and hashes. Funded result JSON additionally retains contribution events,
+pre/post-flow valuations and normalized performance alongside actual balance.
+See [funding and trade controls](funding-and-trade-controls.md).
+
 ```mermaid
 erDiagram
     strategies ||--o{ strategy_versions : publishes
@@ -22,3 +41,5 @@ Dataset revisions normalize candles (unique dataset/symbol/session), FX (unique 
 Runs reference immutable strategy/dataset rows, and store a profile snapshot, profile/config/data hashes, engine/execution/indicator versions, coverage, status, ownership token, heartbeat, timestamps, error and result JSON. There is no randomness in the engine. Completed results contain deterministic order IDs, fills, trades, signals, ledgers, positions/receivables, equity, analytics and benchmark. Large results are deferred during job-list polling. Per-run JSON is deliberately simpler than a table for each ledger row at daily MVP scale.
 
 Experiments retain common profile snapshots and dataset IDs; every member run has an independent ledger. Queue admission is bounded and serialized with a PostgreSQL advisory transaction lock; claiming uses `FOR UPDATE SKIP LOCKED` plus a conditional ownership update. Queue state and result publication are transactional.
+
+`context_snapshots` (migration 003) is an immutable source library separate from accounting datasets. Each row stores a catalog series ID, hash and validated payload with values/dates, optional publication dates, units, missing count, source hashes, retrieval timestamp and FRED vintage windows. New payload metadata supports synthetic labels and explicit review lineage. Approval creates a new immutable row, retaining parent ID/hash, note and review timestamp. Run provenance freezes selected strategy-eligible revision IDs/hashes and a manifest hash; the worker validates both lineage and content before simulation. No additional migration is needed for these JSON fields. Triggers reject updates/deletes; exports check the original raw payload hash, preserving older snapshot hashes when optional defaults are introduced. Reports are read-only derivations of saved results.

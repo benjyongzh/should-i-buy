@@ -520,6 +520,48 @@ main {
   height: 290px;
   padding: 12px 6px 6px;
 }
+.performance-timeline .chart {
+  height: 380px;
+}
+.timeline-controls,
+.timeline-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  margin: 12px 0;
+}
+.timeline-key span:nth-child(1) {
+  color: #167665;
+}
+.timeline-key span:nth-child(2) {
+  color: #c45064;
+}
+.timeline-key span:nth-child(3) {
+  color: #b77935;
+}
+.timeline-key span:nth-child(4) {
+  color: #6167bd;
+}
+.timeline-snapshot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 30px;
+  padding: 18px;
+  margin-top: 16px;
+  background: #f4f7f4;
+  border-radius: 10px;
+}
+.timeline-snapshot div {
+  display: grid;
+  gap: 5px;
+}
+.performance-timeline details {
+  padding: 12px 0;
+  border-bottom: 1px solid #e8ece9;
+}
+.performance-timeline summary {
+  cursor: pointer;
+}
 .two-columns {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

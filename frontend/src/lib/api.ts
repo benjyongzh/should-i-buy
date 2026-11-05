@@ -1,5 +1,14 @@
 import { useQueries, useQuery } from '@tanstack/react-query'
-import type { Dataset, Experiment, Profile, Result, Run, Strategy, Version } from '../types'
+import type {
+  CashBenchmark,
+  Dataset,
+  Experiment,
+  Profile,
+  Result,
+  Run,
+  Strategy,
+  Version,
+} from '../types'
 
 const noStrategies: Strategy[] = []
 const noProfiles: Profile[] = []
@@ -77,6 +86,18 @@ export function useResults(runs: Run[]) {
       .map((r) => ({
         queryKey: ['result', r.id],
         queryFn: () => api<Result>(`/backtests/${r.id}/results`),
+        staleTime: Infinity,
+      })),
+  })
+}
+
+export function useCashBenchmarks(runs: Run[]) {
+  return useQueries({
+    queries: runs
+      .filter((r) => r.status === 'completed')
+      .map((r) => ({
+        queryKey: ['cash-benchmark', r.id],
+        queryFn: () => api<CashBenchmark>(`/research/runs/${r.id}/cash-benchmark`),
         staleTime: Infinity,
       })),
   })

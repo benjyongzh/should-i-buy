@@ -10,6 +10,7 @@ const groups: [string, [string, string, string?][]][] = [
     'Capital & period',
     [
       ['starting_capital', 'Starting capital'],
+      ['monthly_contribution', 'Monthly contribution (account currency)'],
       ['start_date', 'Start date', 'date'],
       ['end_date', 'End date', 'date'],
     ],
@@ -180,6 +181,16 @@ export function Profiles() {
                   <option value="holdout">Historical holdout</option>
                 </select>
               </Field>
+              <Field label="Execution interval">
+                <select
+                  value={String(config.timeframe || '1d')}
+                  onChange={(e) => edit('timeframe', e.target.value)}
+                >
+                  {['1d', '1min', '5min', '15min', '30min', '60min'].map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </Field>
               <Field label="Fractional shares">
                 <select
                   value={String(config.fractional_shares || false)}
@@ -200,7 +211,7 @@ export function Profiles() {
                         required
                         type={type || 'number'}
                         step="any"
-                        value={String(config[k] ?? '')}
+                        value={String(config[k] ?? (k === 'monthly_contribution' ? '0' : ''))}
                         onChange={(e) => edit(k, e.target.value)}
                       />
                     </Field>
@@ -209,9 +220,12 @@ export function Profiles() {
               </div>
             ))}
             <div className="notice">
-              Daily XNYS calendar · next-session open execution · long-only · no leverage · no cash
-              top-ups. USD/SGD uses the latest historically available rate within your age limit.
-              Fees are in account currency.
+              Monthly contributions arrive at the first XNYS session open of each calendar month; a
+              midmonth start receives no retroactive deposit. Zero disables contributions.
+              Strategies decide when to invest available cash. XNYS regular sessions · strictly
+              later eligible interval open · long-only · no leverage. Intraday profiles require
+              complete reviewed interval data. USD/SGD uses historically available rates. Fees and
+              contributions are in account currency.
             </div>
             <div className="actions">
               <button className="button" disabled={save.isPending || !config.start_date}>

@@ -9,7 +9,9 @@ from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
+from app.api.research import router as research_router
 from app.api.routes import router
+from app.api.strategy_inputs import router as strategy_inputs_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.db.session import engine
@@ -24,6 +26,8 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 app.include_router(router)
+app.include_router(research_router)
+app.include_router(strategy_inputs_router)
 app.include_router(llm_router)
 logger = logging.getLogger(__name__)
 

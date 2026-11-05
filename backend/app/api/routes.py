@@ -24,6 +24,7 @@ from app.api.contracts import (
 from app.backtesting.engine import ENGINE_VERSION
 from app.core.config import settings
 from app.db.session import Base, get_db
+from app.market_data.features import FeatureBook, validate_features
 from app.market_data.providers import AlpacaProvider, csv_records
 from app.market_data.validation import validate_coverage
 from app.models.entities import (
@@ -46,6 +47,8 @@ from app.schemas.domain import (
     canonical_hash,
 )
 from app.services.datasets import import_dataset, load_dataset
+from app.services.feature_inputs import context_content_hash, resolve_features
+from app.services.strategy_inputs import resolve_inputs
 
 router = APIRouter(prefix="/api")
 
@@ -345,13 +348,21 @@ def export_dataset(identifier: str, db: Session = Depends(get_db)) -> dict:
 def schedule(body: Schedule, db: Session = Depends(get_db)) -> list[dict]:
     profile = get(db, Profile, body.profile_id)
     dataset = get(db, Dataset, body.dataset_id)
-    if dataset.synthetic and not body.acknowledge_synthetic:
+    bindings, feature_data = resolve_features(db, body.context_snapshot_ids)
+    source_bindings, source_data = resolve_inputs(db, body.strategy_input_ids)
+    synthetic_inputs = (
+        dataset.synthetic
+        or any(source.synthetic for source in feature_data)
+        or any(source.synthetic for source in source_data)
+    )
+    if synthetic_inputs and not body.acknowledge_synthetic:
         raise ValueError("Explicitly acknowledge synthetic demonstration data before running")
     if len(body.strategy_version_ids) != len(set(body.strategy_version_ids)):
         raise ValueError("duplicate strategy versions")
     config = ProfileConfig.model_validate(profile.config)
     data = load_dataset(db, dataset)
-    validate_coverage(data, config)
+    from app.market_data.strategy_inputs import advanced
+
     # Serialize global queue admission, including requests using different profiles.
     if db.get_bind().dialect.name == "postgresql":
         db.execute(text("SELECT pg_advisory_xact_lock(71899321)"))
@@ -372,15 +383,31 @@ def schedule(body: Schedule, db: Session = Depends(get_db)) -> list[dict]:
     rows = []
     for identifier in body.strategy_version_ids:
         version = get(db, StrategyVersion, identifier)
+        strategy_config = StrategyConfig.model_validate(version.config)
+        if advanced(strategy_config, config):
+            from app.backtesting.advanced_validation import validate_advanced
+
+            validate_advanced(strategy_config, config, data, source_data, feature_data)
+        else:
+            validate_coverage(data, config)
+            validate_features(strategy_config, FeatureBook(feature_data), data, config)
         provenance = {
             "engine_version": ENGINE_VERSION,
-            "execution_model": "chronological-open-close-v2",
-            "indicator_version": "decimal-wilder-v1",
+            "execution_model": "event-clock-next-strict-open-v1"
+            if advanced(strategy_config, config)
+            else "chronological-open-close-v2",
+            "indicator_version": "streamed-decimal-wilder-macd-stoch-v1"
+            if advanced(strategy_config, config)
+            else "decimal-wilder-macd-stoch-v2",
             "strategy_hash": version.config_hash,
             "dataset_hash": dataset.content_hash,
             "profile_hash": canonical_hash(config.model_dump(mode="json")),
             "coverage": dataset.metadata_json,
-            "synthetic": dataset.synthetic,
+            "synthetic": synthetic_inputs,
+            "external_inputs": bindings,
+            "external_input_hash": context_content_hash({"bindings": bindings}),
+            "strategy_inputs": source_bindings,
+            "strategy_input_hash": canonical_hash({"bindings": source_bindings}),
         }
         run = BacktestRun(
             strategy_version_id=identifier,

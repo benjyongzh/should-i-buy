@@ -2,6 +2,7 @@ import math
 import statistics
 from decimal import Decimal
 
+from app.analytics.cashflows import investor_return, normalize
 from app.portfolio.ledger import Ledger
 from app.schemas.domain import ProfileConfig
 
@@ -10,6 +11,10 @@ def metrics(curve: list[dict], ledger: Ledger, profile: ProfileConfig) -> dict:
     start = float(profile.starting_capital)
     values = [start] + [float(row["equity"]) for row in curve]
     decimal_values = [profile.starting_capital] + [Decimal(row["equity"]) for row in curve]
+    funded = bool(profile.monthly_contribution)
+    if funded:
+        decimal_values = normalize(curve, profile.starting_capital)
+        values = [float(value) for value in decimal_values]
     returns = []
     for previous, current in zip(decimal_values, decimal_values[1:], strict=False):
         if previous < 0 or current < 0:
@@ -35,7 +40,7 @@ def metrics(curve: list[dict], ledger: Ledger, profile: ProfileConfig) -> dict:
     wins = [Decimal(t["realized_pnl"]) for t in ledger.trades if Decimal(t["realized_pnl"]) > 0]
     losses = [Decimal(t["realized_pnl"]) for t in ledger.trades if Decimal(t["realized_pnl"]) < 0]
     total_costs = ledger.fees + ledger.fx_costs + ledger.slippage_costs
-    return {
+    result = {
         "starting_equity": str(profile.starting_capital),
         "ending_equity": curve[-1]["equity"],
         "absolute_pnl": str(Decimal(curve[-1]["equity"]) - profile.starting_capital),
@@ -72,3 +77,23 @@ def metrics(curve: list[dict], ledger: Ledger, profile: ProfileConfig) -> dict:
         "turnover": float(ledger.turnover / profile.starting_capital),
         "market_exposure": statistics.mean(float(r["exposure"]) for r in curve),
     }
+    if funded:
+        result.update(
+            {
+                "ending_equity": curve[-1]["equity"],
+                "absolute_pnl": str(
+                    Decimal(curve[-1]["equity"]) - profile.starting_capital - ledger.contributions
+                ),
+                "total_contributions": str(ledger.contributions),
+                "total_contributed_capital": str(profile.starting_capital + ledger.contributions),
+                "return_method": "opening-flow-linked time-weighted return",
+                "money_weighted_return": investor_return(
+                    curve, ledger.events, profile.starting_capital
+                ),
+                "cost_addback_return": None,
+                "turnover": float(
+                    ledger.turnover / (profile.starting_capital + ledger.contributions)
+                ),
+            }
+        )
+    return result

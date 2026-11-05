@@ -10,8 +10,15 @@ export const money = (value: unknown, currency = 'SGD') =>
         maximumFractionDigits: 2,
       }).format(Number(value))
     : '—'
-export const percent = (value: unknown) =>
-  typeof value === 'number' ? `${(value * 100).toFixed(2)}%` : '—'
+export const percent = (value: unknown) => {
+  const numeric =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim()
+        ? Number(value)
+        : NaN
+  return Number.isFinite(numeric) ? `${(numeric * 100).toFixed(2)}%` : '—'
+}
 export const number = (value: unknown) => (typeof value === 'number' ? value.toFixed(2) : '—')
 export const short = (value: string) => value.slice(0, 8)
 export function Field({
