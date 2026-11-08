@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   CartesianGrid,
   Brush,
@@ -6,28 +6,19 @@ import {
   Line,
   LineChart,
   ResponsiveContainer,
-  ReferenceDot,
   ReferenceLine,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts'
-import type { Equity } from '../types'
+import { chartData, type ChartMarker, type EquitySeries } from '../lib/chart-data'
+export type { ChartMarker, EquitySeries } from '../lib/chart-data'
 const colors = ['#167665', '#b77935', '#6167bd', '#c45064', '#2794a7']
-export interface EquitySeries {
-  name: string
-  equity: Equity[]
-  baseline?: boolean
-}
-export interface ChartMarker {
-  date: string
-  seriesIndex: number
-  kind: string
-}
+const noMarkers: ChartMarker[] = []
 export function EquityChart({
   series,
   drawdown = false,
-  markers = [],
+  markers = noMarkers,
   selectedDate,
   onSelectDate,
   zoom = false,
@@ -42,20 +33,18 @@ export function EquityChart({
   timeKey?: 'date' | 'timestamp'
 }) {
   const [performance, setPerformance] = useState(false)
+  const [range, setRange] = useState<{
+    domain: string
+    startIndex: number
+    endIndex: number
+  } | null>(null)
   const funded = series.some((s) => s.equity.some((r) => r.performance_equity !== undefined))
-  const dates = new Map<string, Record<string, string | number>>()
-  series.forEach((s, i) =>
-    s.equity.forEach((r) => {
-      const key = timeKey === 'timestamp' ? r.timestamp : r.date
-      if (!key) return
-      const row = dates.get(key) || { date: key }
-      row['s' + i] = drawdown
-        ? r.drawdown * 100
-        : Number(performance ? (r.performance_equity ?? r.equity) : r.equity)
-      dates.set(key, row)
-    }),
+  const { dates, rows, markerGroups } = useMemo(
+    () => chartData(series, markers, timeKey, drawdown, performance),
+    [series, markers, timeKey, drawdown, performance],
   )
-  const rows = [...dates.values()].sort((a, b) => String(a.date).localeCompare(String(b.date)))
+  const domain = JSON.stringify(rows.map((row) => row.date))
+  const selection = range?.domain === domain ? range : null
   let minimum = Infinity,
     maximum = -Infinity
   for (const row of rows)
@@ -65,9 +54,6 @@ export function EquityChart({
         maximum = Math.max(maximum, value)
       }
   const preciseAxis = maximum - minimum < 1000
-  const uniqueMarkers = [
-    ...new Map(markers.map((m) => [`${m.date}:${m.seriesIndex}:${m.kind}`, m])).values(),
-  ]
   return (
     <>
       {funded && !drawdown && (
@@ -101,7 +87,9 @@ export function EquityChart({
           <LineChart
             data={rows}
             margin={{ top: 12, right: 24, bottom: 4, left: 4 }}
-            onClick={(state) => {
+            onClick={(state, event) => {
+              const target = event?.target
+              if (target instanceof Element && target.closest('.recharts-brush')) return
               if (typeof state.activeLabel === 'string' && dates.has(state.activeLabel))
                 onSelectDate?.(state.activeLabel)
             }}
@@ -151,31 +139,43 @@ export function EquityChart({
             {selectedDate && dates.has(selectedDate) && (
               <ReferenceLine x={selectedDate} stroke="#69746e" strokeDasharray="3 3" />
             )}
-            {uniqueMarkers.map((marker) => {
-              const value = dates.get(marker.date)?.['s' + marker.seriesIndex]
-              if (typeof value !== 'number') return null
-              return (
-                <ReferenceDot
-                  key={`${marker.date}:${marker.seriesIndex}:${marker.kind}`}
-                  x={marker.date}
-                  y={value}
-                  r={marker.kind === 'decision' ? 2 : 4}
-                  fill={
+            {markerGroups.map((marker) => (
+              <Line
+                key={marker.key}
+                dataKey={marker.key}
+                stroke="none"
+                dot={{
+                  r: marker.kind === 'decision' ? 2 : 4,
+                  fill:
                     marker.kind === 'buy'
                       ? '#167665'
                       : marker.kind === 'sell'
                         ? '#c45064'
                         : marker.kind === 'decision'
                           ? '#6167bd'
-                          : '#b77935'
-                  }
-                  stroke="#fff"
-                  ifOverflow="hidden"
-                />
-              )
-            })}
+                          : '#b77935',
+                  stroke: '#fff',
+                }}
+                activeDot={false}
+                legendType="none"
+                tooltipType="none"
+                isAnimationActive={false}
+                connectNulls={false}
+              />
+            ))}
             {zoom && rows.length > 1 && (
-              <Brush dataKey="date" height={24} travellerWidth={8} stroke="#69746e" />
+              <Brush
+                dataKey="date"
+                height={24}
+                travellerWidth={8}
+                stroke="#69746e"
+                startIndex={selection?.startIndex}
+                endIndex={selection?.endIndex}
+                onChange={({ startIndex, endIndex }) => {
+                  if (typeof startIndex === 'number' && typeof endIndex === 'number')
+                    setRange({ domain, startIndex, endIndex })
+                }}
+              />
             )}
             {series.map((s, i) => (
               <Line

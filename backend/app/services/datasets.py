@@ -23,7 +23,7 @@ def content(data: DatasetInput) -> dict:
     return payload
 
 
-def import_dataset(db: Session, data: DatasetInput) -> Dataset:
+def import_dataset(db: Session, data: DatasetInput, *, commit: bool = True) -> Dataset:
     if len(data.bars) > settings().max_dataset_rows:
         raise ValueError("dataset exceeds configured row limit")
     coverage = validate_dataset(data)
@@ -71,8 +71,14 @@ def import_dataset(db: Session, data: DatasetInput) -> Dataset:
         CorporateAction(dataset_id=dataset.id, payload=a.model_dump(mode="json"))
         for a in data.actions
     )
-    db.commit()
-    logger.info("dataset_imported", extra={"dataset_id": dataset.id, "rows": len(data.bars)})
+    if commit:
+        db.commit()
+    else:
+        db.flush()
+    logger.info(
+        "dataset_imported" if commit else "dataset_staged",
+        extra={"dataset_id": dataset.id, "rows": len(data.bars)},
+    )
     return dataset
 
 

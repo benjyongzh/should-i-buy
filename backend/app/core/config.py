@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     alpaca_secret_key: SecretStr = SecretStr("")
     fred_api_key: SecretStr = SecretStr("")
     benzinga_api_key: SecretStr = SecretStr("")
+    data_source_contact_email: str = ""
+    intake_max_bytes: int = Field(default=256_000_000, ge=1, le=1_000_000_000)
+    intake_max_artifact_bytes: int = Field(default=32_000_000, ge=1, le=64_000_000)
+    intake_max_seconds: int = Field(default=1200, ge=1, le=3600)
     worker_poll_seconds: float = 2
     worker_lease_seconds: int = 120
     worker_max_run_seconds: int = 1800

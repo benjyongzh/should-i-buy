@@ -1,5 +1,101 @@
 # Continuous 2018–2025 strategy research
 
+The [retail information pilot](retail-information-pilot-2026-11-08.md) now verifies
+AAPL/MSFT news and original insider/earnings samples using existing access.
+A qualified retail provider can supply information without direct Senate access.
+Samples are retained in the source UI as unreviewed/incomplete; full 2018–2025
+coverage, individual analyst changes and historical versions remain separate gates.
+Quiver API access is paid and optional; no new key was needed for this pilot.
+
+The [full Congress acquisition follow-up](congress-full-coverage.md) inventories
+all available House PTRs rather than a fixed politician/ticker list. Bulk
+acquisition is active; Senate access and historical clocks/row qualification
+remain blockers for full-period Congress rules. The earlier narrow cohort and
+existing price/indicator strategies retain their verified behavior.
+
+The [canonical Congress follow-up](congress-ledger-verification-2026-11-08.md) now
+qualifies one named March2022 House filing cohort, with real causal/financial
+checks. It remains too narrow for full2018–2025 Congress replay. Use the
+[source-review workflow](congress-source-workflow.md) to extend explicitly reviewed
+cohorts; no strategy can silently substitute missing Congress history.
+
+The [research journal](research-journal.md) is now implemented and
+[verified with real2018–2025 runs](research-journal-verification-2026-11-08.md).
+It registers immutable hypotheses/criteria, freezes comparison conditions, binds
+reviewed published candidates, retains attempts/conclusions and supplies the
+strategy conversation with selected outcome evidence and yearly reports. The
+[bounded Congress review](congress-bounded-review-2026-11-08.md) identifies an
+Apple amendment; no complete source has been approved.
+
+The [conversation-history follow-up](conversation-history-verification-2026-11-07.md)
+now keeps one conversation per strategy, complete eligible model recall and a
+read-only transcript at each version publication. Later experiments append to the
+same conversation without changing earlier checkpoints. [Congress intake](congress-qualification-2026-11-07.md)
+now retains real report/clock evidence under personal use; source completeness is
+still a blocker, so those observations are not used for trading performance claims.
+
+Latest conversation follow-up: [streamed clarification and sourced estimates](strategy-conversation.md)
+now support discussion and reviewed amendments using selected frozen run evidence,
+including the exact rules that produced each result. Estimates remain separate
+research commentary. [New intraday sources](intraday-congress-verification-2026-11-07.md)
+qualify 92 complete monthly partitions; four incomplete months still block a full
+eight-year intraday replay. Congress provenance/access qualification remains open.
+
+Latest execution: [full-cycle Docker/real-data verification](full-cycle-verification-2026-11-06.md)
+now demonstrates thirteen real cases and their exact repeats with unchanged
+profile/data/engine controls, full-period monthly contributions/DCA, independent
+accounting and period analysis, plus actual backup restoration/restart persistence
+in a separate project on 18082. The predeclared RSI30→25 amendment produces a mixed
+result: lower drawdown/costs, slightly worse unfunded return and higher funded
+ending value. Both versions and all attempts remain retained. That dated structured journal was a test artifact; the product UI is now
+implemented in the November8 follow-up above. The user later
+approved external LLM testing: [seven actual editor prompts](llm-user-workflow-verification-2026-11-07.md)
+now verify exact evidence-based amendment, conditions, frequency/sizing changes,
+review/publication and four new real cases with exact repeats. A false refusal
+was retained and clarified; missing event/sector/intraday sources remain blocked.
+
+Current status: the basic manual improvement loop is already available: immutable
+strategy versions and run history, full-period sequential replay, decision/fill
+traces, comparison charts, cash/SPY references and year/quarter/month analysis.
+[Real AAPL/MSFT/SPY acceptance](real-equity-acceptance-2026-11-06.md) includes fixed
+rules and exact repeats. [Company onboarding](company-onboarding.md) adds explicit
+source qualification for requested tickers; its coordinator is now verified in a separate Docker test project, while the
+pre-existing Docker deployment remains unchanged. NVDA onboarding live
+acceptance covers Apr–Jul 2024, not the full 2018–2025 period.
+
+## Implemented research cycle
+
+Use the [journal workflow](research-journal.md): choose a completed baseline,
+register the question and intended change, select the plan in the strategy chat,
+review/accept/publish the candidate, bind it and schedule attempts. Profile costs,
+starting capital and contributions remain independent controls; timing, sizing
+and rules remain strategy controls. Dataset/source/engine/profile changes require
+a separate baseline. Compare every recorded outcome by period and against cash
+and SPY, then record an immutable conclusion and linked follow-on hypothesis.
+
+The actual acceptance replays RSI30 and RSI25 across2018–2025 with monthlySGD500
+injections. The candidate improves funded ending value/drawdown but misses several
+positive years and trails SPY. A live follow-up discussion uses both attempts and
+all eight annual reports without changing the draft or earlier conversation
+snapshot. No autonomous optimizer, training or publication was added.
+
+All 2018–2025 remains development history as requested; no mandatory 2018–2024/
+2025 holdout split is introduced. Repeated improvement on those years does not
+establish future performance. No new API key is needed for this loop using the
+existing reviewed inputs.
+
+Next, prioritize qualified historical
+classifications for sector rules, then original-version company news/ratings,
+then Congress disclosures with actual public-availability/amendment evidence.
+These sources are conditional requirements for rules using them, not blockers
+for qualified price/indicator strategies. Backup restoration and Docker restart/queued-work persistence now pass for the
+new isolated project. External-database deployment and host reboot remain separate
+operational acceptance work. Existing containers remain untouched
+unless the deployment scope is explicitly changed.
+
+The earlier dated source-preparation record follows and retains its original
+counts and then-pending limitations.
+
 Current follow-up: reviewed combined SPY revision `051e4285-e374-4b44-b82c-a54ffc8a6a6e` has completed buy/hold, SMA20/50 and RSI14 over 2018–2025, each with an identical repeat and independent financial reconciliation. [Actual results and yearly performance](real-spy-acceptance-2026-11-05.md) disclose 95% entry sizing,14-day reference-FX policy and source limits. QQQ/SMH/XLE remain unreviewed. MACD/stochastic and reviewed external operands are also implemented in engine1.3; external signal approval remains separate from accounting FX/actions. The dated import-only batch below records the earlier1.2 state and its then-unresolved SPY blockers.
 
 The selected workflow uses **all of 2018–2025 for iterative development**. Simulations still progress session by session with restricted historical inputs. Each strategy revision runs across the full period; year/quarter/month results identify improvements and regressions. No prescribed holdout split is required. Repeatedly inspecting and tuning against these years makes them development data, and improvements are not a guarantee of future performance.

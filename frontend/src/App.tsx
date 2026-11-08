@@ -24,16 +24,23 @@ import { RunDetails } from './pages/RunDetails'
 import { Compare } from './pages/Compare'
 import { ContextData } from './pages/ContextData'
 import { StrategySources } from './pages/StrategySources'
+import { CongressCoverage } from './pages/CongressCoverage'
+import { CongressSources } from './pages/CongressSources'
+import { ResearchJournal } from './pages/ResearchJournal'
+import { Companies } from './pages/Companies'
 
 const nav = [
   ['/', 'Overview', LayoutDashboard],
   ['/strategies', 'Strategies', GitBranch],
   ['/profiles', 'Backtest profiles', Settings2],
   ['/backtests', 'Backtests', Activity],
+  ['/research', 'Research journal', FlaskConical],
   ['/compare', 'Compare', ChartNoAxesCombined],
   ['/data', 'Market data', Database],
   ['/context', 'Market context', BookOpen],
   ['/sources', 'Strategy inputs', Database],
+  ['/congress', 'Congress source review', BookOpen],
+  ['/companies', 'Company onboarding', Database],
 ] as const
 export default function App() {
   const location = useLocation()
@@ -117,9 +124,13 @@ export default function App() {
             <Route path="/data" element={<MarketData />} />
             <Route path="/context" element={<ContextData />} />
             <Route path="/sources" element={<StrategySources />} />
+            <Route path="/companies" element={<Companies />} />
             <Route path="/backtests" element={<Backtests />} />
             <Route path="/backtests/new" element={<NewBacktest />} />
             <Route path="/backtests/:id" element={<RunDetails />} />
+            <Route path="/congress/coverage" element={<CongressCoverage />} />
+            <Route path="/congress" element={<CongressSources />} />
+            <Route path="/research" element={<ResearchJournal />} />
             <Route path="/compare" element={<Compare />} />
             <Route
               path="*"

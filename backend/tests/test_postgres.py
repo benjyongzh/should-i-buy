@@ -47,6 +47,37 @@ def test_postgres_migrations_immutable_inputs_and_concurrent_claims(monkeypatch)
         config = Config("alembic.ini")
         command.upgrade(config, "head")
         command.check(config)
+        from test_intake_sources import assert_immutable_evidence
+
+        assert_immutable_evidence(factory)
+        from test_conversation_versions import assert_postgres_conversation_immutability
+
+        assert_postgres_conversation_immutability(factory)
+        from test_research_journal import assert_postgres_journal_immutability
+
+        assert_postgres_journal_immutability(factory)
+        from test_congress_collections import assert_postgres_collection_requests_immutable
+
+        assert_postgres_collection_requests_immutable(factory)
+        from app.onboarding.contracts import IntakeRequest
+        from app.onboarding.jobs import claim as claim_intake
+        from app.onboarding.jobs import enqueue
+
+        with factory() as db:
+            for index in range(8):
+                enqueue(
+                    db,
+                    IntakeRequest(
+                        symbol="NVDA",
+                        start="2020-01-02",
+                        end="2020-01-10",
+                        idempotency_key=f"concurrent-intake-{index}",
+                    ),
+                )
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            intake_claims = list(executor.map(lambda _: claim_intake(factory), range(8)))
+        assert len({item[0] for item in intake_claims if item}) == 8
+        assert claim_intake(factory) is None
         with factory() as db:
             snapshot = ContextSnapshot(
                 series_id="VIX", content_hash="test-context-hash", payload={}

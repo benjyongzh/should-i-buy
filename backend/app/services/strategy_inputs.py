@@ -25,7 +25,7 @@ def checked_input(row):
     return data
 
 
-def retain_input(db, data):
+def retain_input(db, data, *, commit=True):
     payload = data.model_dump(mode="json")
     digest = input_hash(payload)
     row = db.scalar(
@@ -34,7 +34,10 @@ def retain_input(db, data):
     if row is None:
         row = StrategyInputRevision(kind=data.kind, content_hash=digest, payload=payload)
         db.add(row)
-        db.commit()
+        if commit:
+            db.commit()
+        else:
+            db.flush()
     return row
 
 

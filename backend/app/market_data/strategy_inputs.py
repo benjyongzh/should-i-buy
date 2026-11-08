@@ -6,7 +6,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AwareDatetime, Field, model_serializer, model_validator
 
 from app.market_data.calendar import session_times
 from app.schemas.domain import Bar, StrictModel, Symbol
@@ -123,15 +123,57 @@ class CongressDetails(StrictModel):
     filing_id: str = Field(min_length=1, max_length=160)
     reporter: str = Field(min_length=1, max_length=160)
     owner: Literal["self", "spouse", "dependent", "joint", "unknown"] = "unknown"
-    transaction: Literal["purchase", "sale", "exchange"]
+    transaction: Literal[
+        "purchase", "sale", "exchange", "option_exercise", "charitable_transfer", "unknown"
+    ]
     transaction_date: date
     filed_at: AwareDatetime | None = None
     public_at: AwareDatetime
     amount_min: Decimal = Field(ge=0)
     amount_max: Decimal | None = Field(default=None, ge=0)
 
+    instrument: Literal["equity", "call_option", "put_option", "other", "unknown"] | None = None
+    canonical_transaction_id: str | None = Field(default=None, min_length=1, max_length=100)
+    observation_id: str | None = Field(default=None, min_length=1, max_length=100)
+    reported_transaction_code: Literal["P", "S", "S (partial)", "E"] | None = None
+
+    @model_serializer(mode="wrap")
+    def preserve_legacy_payload(self, handler):
+        payload = handler(self)
+        for key in (
+            "instrument",
+            "canonical_transaction_id",
+            "observation_id",
+            "reported_transaction_code",
+        ):
+            if payload.get(key) is None:
+                payload.pop(key, None)
+        return payload
+
     @model_validator(mode="after")
     def ranges(self):
+        metadata = (
+            self.instrument,
+            self.canonical_transaction_id,
+            self.observation_id,
+            self.reported_transaction_code,
+        )
+        if any(value is not None for value in metadata) or self.transaction in (
+            "option_exercise",
+            "charitable_transfer",
+            "unknown",
+        ):
+            if not all(value is not None for value in metadata):
+                raise ValueError(
+                    "canonical Congress details require instrument, identity and reported-code provenance"
+                )
+            if self.transaction == "option_exercise" and self.instrument not in (
+                "call_option",
+                "put_option",
+            ):
+                raise ValueError(
+                    "option exercise cannot be represented as an ordinary equity instrument"
+                )
         if self.amount_max is not None and self.amount_max < self.amount_min:
             raise ValueError("invalid disclosed amount range")
         from zoneinfo import ZoneInfo

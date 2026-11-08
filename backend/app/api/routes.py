@@ -208,6 +208,9 @@ def publish(identifier: str, body: Publish, db: Session = Depends(get_db)) -> di
     )
     db.add(version)
     db.flush()
+    from app.llm.conversation_history import freeze_conversation
+
+    freeze_conversation(db, row, version)
     row.parent_version_id = version.id
     db.commit()
     return dump(version)
@@ -346,6 +349,10 @@ def export_dataset(identifier: str, db: Session = Depends(get_db)) -> dict:
 
 @router.post("/backtests", response_model=list[RunOut], status_code=202)
 def schedule(body: Schedule, db: Session = Depends(get_db)) -> list[dict]:
+    return schedule_runs(body, db)
+
+
+def schedule_runs(body: Schedule, db: Session, *, commit: bool = True) -> list[dict]:
     profile = get(db, Profile, body.profile_id)
     dataset = get(db, Dataset, body.dataset_id)
     bindings, feature_data = resolve_features(db, body.context_snapshot_ids)
@@ -419,7 +426,10 @@ def schedule(body: Schedule, db: Session = Depends(get_db)) -> list[dict]:
         )
         db.add(run)
         rows.append(run)
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     return [dump(r, {"result", "worker_token", "heartbeat_at"}) for r in rows]
 
 

@@ -114,6 +114,7 @@ it('reviews an LLM interpretation before draft acceptance and blocks unsupported
     '/strategies/s1',
   )
   await screen.findByDisplayValue(saved.name)
+  await user.click(screen.getByText('Single-request compatibility assistant'))
   await user.type(screen.getByLabelText('Strategy assistant prompt'), 'Buy an hour after opening')
   await user.click(screen.getByRole('button', { name: 'Propose changes' }))
   await screen.findByText('Reviewed intraday prices')

@@ -1,5 +1,30 @@
 # Data providers and contracts
 
+The [retail information pilot](retail-information-pilot-2026-11-08.md) now verifies
+AAPL/MSFT news and original insider/earnings samples using existing access.
+A qualified retail provider can supply information without direct Senate access.
+Samples are retained in the source UI as unreviewed/incomplete; full 2018–2025
+coverage, individual analyst changes and historical versions remain separate gates.
+Quiver API access is paid and optional; no new key was needed for this pilot.
+
+Latest: [permanent conversation/version history](conversation-history-verification-2026-11-07.md)
+now preserves full eligible context and publication-time read-only transcripts.
+[Congress qualification](congress-qualification-2026-11-07.md) has begun under
+confirmed personal non-commercial use: original indexes/reports, three matching
+archive replays and two raw observations are retained. Coverage remains incomplete;
+no Congress source was approved for financial backtests.
+
+Latest source-review follow-up: [AAPL/MSFT accounting and deployed SEC/BLS imports](company-intake-verification-2026-11-06.md)
+are complete under their recorded research availability policies. The combined
+AAPL/MSFT/SPY revision has 7,542 daily bars, 2,494 reference-FX observations and
+121 actions; reviewed event streams contain 190 BLS and 145 SEC observations.
+These were prepared/reviewed externally and imported through existing HTTP
+contracts. The [requested-company onboarding coordinator](company-onboarding.md) now orchestrates
+daily accounting and SEC filing evidence, with explicit review and no fixed ticker
+allowlist. It is verified in isolation and not deployed to port 18080. [Real strategy acceptance](real-equity-acceptance-2026-11-06.md)
+now demonstrates 13 fixed equity/event cases and their exact repeats under the
+documented source timing and FX policies.
+
 ## Additional historical strategy sources — engine 2.0.0
 
 **Strategy sources** prepares Alpaca raw intraday and company-news partitions and
@@ -95,3 +120,39 @@ Use the US [State Street historical distributions and distribution schedule](htt
 On 2026-11-05 the historical XLSX was downloaded and inspected: 20 SPY distribution records cover 2018–2022 with amounts and ex/record/payable dates, including the December 2022 payment in January 2023. The workbook contains no declaration timestamps or split-history fields. The current schedule PDF concerns 2026, so it cannot establish the historical declaration clock. Full source reconciliation and pre-open availability evidence remain outstanding.
 
 Keep source files, declaration evidence, ex-date, record date (for reconciliation), payment date, amount, split ratio, transformation notes and a review log. A date-only same-day announcement is insufficient to assert knowledge before the effective open. Do not fabricate an earlier timestamp, missing payment date, zero dividend or no-split attestation. Price-only data cannot certify total-return acceptance. See [the deployment/integration runbook](deployment-verification.md) for UI steps, required credentials and the pending independent fill/accounting audit.
+
+## November 7 streaming/source follow-up
+
+The [strategy conversation](strategy-conversation.md) uses selected local frozen
+evidence with explicit cutoff and source audits. It does not fetch news or vendor
+records automatically. Existing LLM credentials suffice; estimates remain separate
+research commentary.
+
+Alpaca supplied 96 monthly AAPL/MSFT/SPY partitions for 2018–2025;92 complete
+partitions have reviewed research children, while four with 27 missing intervals
+remain blocked. Congress access/clock/use qualification is unresolved; no new
+Congress key or subscription was configured. See the
+[actual intraday/Congress source evidence](intraday-congress-verification-2026-11-07.md).
+
+## Bounded House canonical-ledger intake
+
+The [Congress source review](congress-source-workflow.md) page can acquire official
+House annual indexes and specific PTR PDF/archive pairs without a new API key. It
+retains exact responses/hashes and validates matching archived bytes/Memento
+headers. Manual row/issuer/taxonomy review and explicit canonical amendment links
+precede approval. The first qualified source is only the Pelosi March2022 AAPL/
+MSFT filing cohort; it is not broad Congress coverage. Senate access, original
+first-public clocks and automatic PDF interpretation remain pending. Cross-year
+index support is now available in the bounded review workflow. [Actual checks](congress-ledger-verification-2026-11-08.md).
+
+## Full available PTR inventory and Senate bridge
+
+The [full-scope Congress collector](congress-full-coverage.md) now inventories
+all House PTR filers across2018–2025 with boundary-support indexes, acquiring
+exact PDFs and review-only text in resumable batches. Valid report IDs can be
+seven or eight digits.403/429 stops source requests. Archive search targets do not
+become publication times; returned captures must be verified. The full collection
+is not yet strategy eligible. Senate normal browser/server access remains403 here;
+a user-run same-origin exporter can retain current captures without session
+credentials. No real Senate report or original posting clock was obtained in
+this phase, and no extra API key resolves the access denial.

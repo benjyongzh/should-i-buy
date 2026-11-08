@@ -9,7 +9,9 @@ export function Compare() {
   const lab = useLab()
   const [params, setParams] = useSearchParams()
   const experiment = params.get('experiment') || ''
-  const [ids, setIds] = useState<string[]>([])
+  const [ids, setIds] = useState<string[]>(() =>
+    (params.get('runs') || '').split(',').filter(Boolean).slice(0, 6),
+  )
   const [sort, setSort] = useState('total_return')
   const completed = lab.runs.filter((r) => r.status === 'completed')
   const selected = completed.filter(

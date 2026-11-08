@@ -1,5 +1,10 @@
 # Trading Lab
 
+[Retail information pilot](docs/retail-information-pilot-2026-11-08.md): real
+AAPL/MSFT news, insider and earnings samples are retained for review; continuous
+historical coverage is not yet approved. Quiver API is paid, optional and not
+configured. Existing services remain unchanged.
+
 A self-hosted, single-user US equity/ETF research platform. Create declarative strategies, publish immutable versions, configure shared financial assumptions, run chronological daily/intraday historical backtests, and compare performance. No brokerage execution is implemented.
 
 Strategy rules support RSI, EMA/SMA, volume, MACD, stochastic and explicitly reviewed external observations such as macro series. Read [strategy inputs](docs/strategy-inputs.md) for timestamped source import, immutable review revisions and run selection. Adding a signal source does not waive the separate historical FX/corporate-action acceptance requirements.
@@ -10,6 +15,27 @@ Congress-disclosure rules. Natural-language plans remain reviewed drafts until
 explicit publication. Read [capabilities](docs/strategy-capabilities.md) and the
 [exact data/key checklist](docs/historical-input-checklist.md). These capabilities
 do not supply missing historical observations or original vendor vintages.
+
+The [streaming strategy conversation](docs/strategy-conversation.md) asks for
+clarification, shows selected-source audits and labels evidence-based research
+estimates. Each strategy has one permanent conversation with full eligible recall
+and [read-only publication transcripts](docs/conversation-history-verification-2026-11-07.md).
+Review, draft acceptance and publication remain separate. Latest checks:
+304 backend/PostgreSQL tests and 62 frontend pass. [Intraday source qualification](docs/intraday-congress-verification-2026-11-07.md)
+supplies 92 complete monthly partitions; four incomplete months and broad Congress
+histories remain blocked. [Congress qualification](docs/congress-qualification-2026-11-07.md)
+now retains original reports and bounded archive-clock evidence; no complete
+Congress stream is approved. The [research journal](docs/research-journal.md) now records hypotheses, frozen
+comparisons, attempts and conclusions, with selected outcome analysis in the same
+strategy conversation. [Real acceptance](docs/research-journal-verification-2026-11-08.md)
+uses a new isolated18088/15446 project; pre-existing containers remain untouched.
+
+The [Congress source-review workflow](docs/congress-source-workflow.md) now
+qualifies a narrow House filing cohort with canonical amendment handling and
+[real test/repeat evidence](docs/congress-ledger-verification-2026-11-08.md).
+The [full Congress acquisition](docs/congress-full-coverage.md) now runs in the
+latest isolated app on 18092/15450, with 6,234 House PTR records inventoried.
+Full qualification remains pending; Senate still returns403 from this environment.
 
 ## Start locally
 
@@ -54,7 +80,19 @@ Open [localhost:8080](http://localhost:8080). Compose runs PostgreSQL, a one-sho
 
 To use an existing PostgreSQL instance, set `DATABASE_URL` and use `docker compose -f compose.external.yml up --build -d`; the external configuration has no bundled database. Percent-encode reserved characters in connection URLs. Restrict access through an authenticated reverse proxy or trusted VPN before allowing non-local access. This MVP intentionally has no account/login system.
 
-Docker deployment is now verified on this Linux homelab as well as in the earlier Windows record. The isolated project uses loopback port 18080 and its own database volume; existing homelab services are untouched. Current checks: 140 backend tests including PostgreSQL, 26 frontend tests/build, Ruff and migration drift pass. Selected reporting/comparison desktop/mobile browser checks also pass. External-database deployment, reboot autostart and backup restoration remain unverified. Use the [pinned isolated deployment commands](docs/verification-linux-2026-11-05.md), rather than default port 8080 on this host.
+Docker deployment is now verified on this Linux homelab as well as in the earlier Windows record. The isolated project uses loopback port 18080 and its own database volume; existing homelab services are untouched. That earlier reporting deployment passed 140 backend tests including PostgreSQL, 26 frontend tests/build, Ruff and migration drift. Current isolated code checks are recorded in [verification](docs/verification.md). Selected reporting/comparison desktop/mobile browser checks also pass. External-database deployment and reboot autostart remain unverified. Backup restoration now passes in the [new isolated full-cycle project](docs/full-cycle-verification-2026-11-06.md). Use the [pinned isolated deployment commands](docs/verification-linux-2026-11-05.md), rather than default port 8080 on this host.
+
+## Requested-company onboarding (verified in a separate Docker test project)
+
+The `/companies` page queues ticker/date requests, retains Alpaca/SEC evidence,
+reports blockers and requires explicit review before publishing an immutable
+package. Daily accounting and SEC filing-presence collection are implemented;
+other requested capabilities remain blocked. Migration 005 and updated API,
+worker and frontend are required. See [workflow and configuration](docs/company-onboarding.md)
+and [actual isolated verification](docs/company-onboarding-verification-2026-11-06.md).
+A separate full-cycle stack now runs on loopback 18082 with its own database volume;
+[real-data, funded replay and backup-restore evidence](docs/full-cycle-verification-2026-11-06.md)
+is recorded. Existing homelab containers and project deployment on port 18080 remain unchanged.
 
 ## First research workflow
 

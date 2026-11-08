@@ -125,8 +125,15 @@ export function StrategySources() {
       }),
     onSuccess: retained,
   })
+  const payload = detail.data?.data
   const rawRows =
-    detail.data?.data.bars || detail.data?.data.states || detail.data?.data.events || []
+    payload?.kind === 'intraday'
+      ? (payload.bars ?? [])
+      : payload?.kind === 'universe'
+        ? (payload.states ?? [])
+        : payload?.kind === 'events'
+          ? (payload.events ?? [])
+          : []
   const cutoff = asOf ? new Date(asOf + 'Z').getTime() : Infinity
   let visible = rawRows.filter(
     (row) =>

@@ -20,6 +20,11 @@ class AuthorRequest(StrictModel):
     prompt: str = Field(min_length=1, max_length=5000)
 
 
+@router.get("/proposals/{identifier}")
+def retained_proposal(identifier: str, db: Session = Depends(get_db)):
+    return dump(get(db, LLMProposal, identifier))
+
+
 @router.post("/plan-strategy")
 def plan(body: AuthorRequest, db: Session = Depends(get_db)):
     from app.api.strategy_inputs import describe_capabilities

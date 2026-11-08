@@ -1,9 +1,11 @@
 import argparse
 import time
 
+from app.congress.jobs import process_collection_one
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.db.session import SessionLocal
+from app.onboarding.jobs import process_intake_one
 from app.services.jobs import process_one
 
 
@@ -14,9 +16,11 @@ def main():
     configure_logging()
     while True:
         processed = process_one(SessionLocal)
+        intake = process_intake_one(SessionLocal)
+        congress = process_collection_one(SessionLocal)
         if args.once:
             return
-        if processed is None:
+        if processed is None and intake is None and congress is None:
             time.sleep(settings().worker_poll_seconds)
 
 

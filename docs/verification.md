@@ -1,5 +1,334 @@
 # Implementation milestones and verification
 
+## Retail information source pilot — 2026-11-08
+
+The target now explicitly models selected retail feeds; direct Senate access is
+not mandatory when a suitable provider supplies reviewed information. Existing
+Alpaca credentials supply historical/recent AAPL/MSFT news. Nine sample windows
+produce 1,282 news records; 58 original SEC filings include 36 Form 4s, four
+amendments and 18 earnings-related 8-Ks. An independent audit checks 92 retained
+response hashes, all news clocks/identities, 39 insider rows and earnings exhibits.
+Eleven unreviewed/incomplete revisions are imported into the existing source UI;
+all 11 pre-existing backtests are unchanged. No engine change or new news-driven
+performance claim is made.
+
+304 backend/PostgreSQL tests, 62 frontend tests, Ruff and frontend build pass.
+Missing article update clocks now fail instead of falling back to creation.
+A real older article updated in a later query is retained and explicitly excluded
+from that publication cohort. Completed pagination does not establish original
+historical coverage. Pilot SEC HTTP-decoding and rendered-XML filename defects
+were reproduced and fixed. The source viewer now selects rows by source kind; real exported event/universe
+payloads had been hidden by their empty bars array. A separate frontend on 18094
+serves this tested fix; six actual browser checks pass, including a real revised
+article withheld before its update time. All 57 pre-existing containers remain
+unchanged. Existing containers were not restarted: checked-out
+adapter fixes are tested through separate preparation/import, not deployed over
+the running provider-fetch endpoint. Quiver API is paid and remains optional;
+structured analyst access, original news versions, continuous insider history,
+amendments and scheduled freshness remain pending. See the
+[full pilot evidence, pricing and specific inputs](retail-information-pilot-2026-11-08.md).
+
+## Full Congress acquisition and Senate access — 2026-11-08
+
+**Full historical Congress coverage is not yet qualified.** All ten requested
+House indexes validate: 4,976 PTRs in 2018–2025 and 1,258 boundary-support records
+in 2017/2026, 6,234 total. The resumable all-filer acquisition is active in the new
+18092/15450 project. At the checkpoint 1,213 acquisitions persisted through
+recreation/database restart; the same immutable request resumed. The final audit recorded 2,606 acquired PDFs at 00:18 UTC; live
+counts are on the new coverage page. All 52 pre-existing containers are unchanged.
+Source collection never auto-approves rows.
+
+Normal Senate server/browser access still returns 403. A reviewed normal-browser
+export/import bridge exists and passes synthetic checks, but no live Senate
+search/results session or real report import is verified. An API key does not
+resolve this denial. Current browser captures do not establish historical clocks.
+
+283 backend/PostgreSQL and 60 frontend tests pass, plus migration 009/drift,
+lint/format/build. Full-scope testing fixes the eight-digit-only ID assumption,
+a cached-index import defect and Nginx's stale API-container address. Cross-year
+supporting indexes preserve old ledger serialization. The earlier real bounded
+Congress result reproduces exactly under unchanged engine 2.0.0. See the
+[complete scope, evidence and specific next actions](congress-full-coverage.md).
+
+## Canonical Congress cohort qualification — 2026-11-08
+
+The [Congress source workflow](congress-source-workflow.md) now acquires bounded
+House index/PDF/replay evidence, reconciles explicit canonical transaction and
+amendment identities, and creates eligible children only after scoped review.
+The March2022 Pelosi AAPL/MSFT filing cohort now qualifies under its conservative
+observed-public policy. It is not an all-Congress or complete2018–2025 feed.
+
+**276 backend/PostgreSQL and57 frontend tests pass.** A live HTTP500 replay failure
+was retained; one retry established the exact-byte/Memento bound. Ten browser
+checks pass. The real short exercise-following test/repeat ends atSGD9,992.07338455
+with2 orders; the ordinary-equity-purchase control has0 orders. Independent
+reconstruction matches40 marks/20 decisions/4 fills includingSPY references. Full
+2018–2025 scheduling rejects missing coverage, and an earlier full-period RSI
+result reproduces exactly. Engine2.0.0 is unchanged.
+
+The fresh18090/15448 project preserves all47 pre-existing containers,35 older
+results,6 copied source results,25 conversation turns,7 transcripts and the earlier
+journal/raw revisions. Actual ledger/approval/source updates and deletes are
+rejected by PostgreSQL; persistence passes recreation/restart. See the
+[complete evidence and remaining scope](congress-ledger-verification-2026-11-08.md).
+
+## Research journal, real improvement loop and bounded Congress review — 2026-11-08
+
+The product [research journal](research-journal.md) now retains immutable plans,
+published candidates, all recorded attempts, notes and conclusions around the
+existing simulator. Prospective/retrospective chronology, frozen comparison
+controls, atomic scheduling and explicit review/publication are enforced.
+Selected journal evidence supplies the strategy's single conversation with
+recorded outcomes and yearly reports, with later events/outcomes withheld at
+earlier cutoffs. Engine2.0.0 is unchanged.
+
+**259 backend/PostgreSQL and 54 frontend tests pass**, alongside migration/drift,
+lint/format/build. A real AAPL2018–2025 browser cycle includes two actual LLM calls,
+a reviewed RSI30→25 publication, candidate and exact repeat, comparison and an
+immutable conclusion. Independent reconstruction passes8,044 account marks,
+4,022 decisions,218 fills and238 strategy ledger entries. The candidate improves
+aggregate funded ending equity/drawdown in this sample but misses positive years
+and trails the matching SPY reference; no future-performance claim is made.
+
+The new isolated project on18088/15446 survives application recreation/database
+restart. All42 pre-existing containers,35 older results,3 copied source results,
+23 earlier conversation turns and5 publication transcripts are preserved.
+[Complete acceptance evidence](research-journal-verification-2026-11-08.md).
+
+The [bounded House review](congress-bounded-review-2026-11-08.md) verifies two
+March2022 filings and archive bounds, and identifies an Apple option-exercise
+amendment that must not be counted as a second purchase. No new eligible Congress
+revision or Congress-driven backtest is claimed; lineage/coverage/clocks and
+Senate access remain blocked.
+
+## Permanent conversation memory, version snapshots and Congress intake — 2026-11-07
+
+Migration 007 enforces one permanent conversation identity per strategy, ordered
+finalized turns and immutable publication-time transcripts. Complete eligible
+conversation recall replaces the eight-turn window, including proposed rule JSON.
+Capacity failure is explicit instead of silently truncating memory. Every version
+can open its read-only conversation boundary; later discussion stays in the same
+conversation without entering earlier versions. Legacy backfill excludes replies
+that completed after publication and leaves unrecorded history empty.
+
+**255 backend/PostgreSQL and 51 frontend tests pass.** Four actual provider calls,
+ten explicitly synthetic padding messages and 16 named browser assertions verify
+recall beyond eight turns, a remembered 321.09 SGD weekly-buy proposal, explicit
+publication, immutable13-message v2 transcript and exclusion of a later 999 SGD idea.
+No market observations or financial results were fabricated for this memory test.
+SQLite/PostgreSQL immutability, migration/drift, lint/format and build are checked.
+The new test project uses 18086/15444 and a restored copy of prior test data.
+
+The user confirmed personal, non-commercial use. House acquisition now retains
+eight 2018–2025 indexes (23,139 entries; 4,976 PTRs), 16 original sample PDFs and
+three byte-matching public archive replays with verified Memento capture clocks.
+Two bounded Congress observations are imported as raw/unreviewed/incomplete;
+four real before/at-clock visibility checks pass and strategy readiness rejects
+the source. Options, exercises and charitable transfers remain distinguished.
+Full House/Senate/company completeness and original first-release timing remain
+unqualified. See [history verification](conversation-history-verification-2026-11-07.md)
+and [Congress evidence](congress-qualification-2026-11-07.md).
+
+## Streaming strategy conversations and intraday sources — 2026-11-07
+
+**Demonstrated in a new isolated project on 18084/15442:** migration 006, retained
+strategy conversations, actual provider-to-browser streaming, ambiguity questions,
+clarification answers, explicit draft review/acceptance/publication, evidence audits,
+conditional sourced estimates, topic redirection, no-evidence handling and the
+actual Stop button. Six complete live scenarios pass, with 42 named browser
+assertions plus the separate cancellation check. Failed and interrupted attempts
+remain retained. A fixed-budget model misunderstanding was corrected in the prompt;
+run evidence now includes its frozen tested rules rather than only a version ID.
+Full checks pass: **248 backend tests including PostgreSQL, 49 frontend tests,
+Ruff lint/format, Prettier, production build and Alembic no-drift check**.
+
+Alpaca acquisition retains 495 raw responses and 156,183 complete 15-minute bars
+for AAPL/MSFT/SPY across 2018–2025. Independent reconstruction checks every bar.
+Ninety-two monthly partitions have reviewed children under explicit revised-history
+and 60-second-delay research assumptions. Four months with 27 gaps stay unreviewed;
+full-period readiness and forced scheduling reject rather than substitute data.
+A January 2019 one-hour-after-open case and exact repeat pass independent checks
+of all three fills and 21 daily marks. This is not full-period intraday success.
+
+Congress remains **unqualified**: permitted-use classification and original public
+availability/archive evidence are missing; direct Senate access returned 403.
+No disclosure reports were downloaded and no access conditions were bypassed.
+Existing containers/databases were not upgraded or restarted by this work.
+See [chat results](strategy-conversation-verification-2026-11-07.md),
+[intraday/Congress evidence](intraday-congress-verification-2026-11-07.md)
+and the [visual workflow](data-workflow.html#conversation).
+
+Final preservation audit: all 35 earlier result hashes and checked versions remain
+unchanged. All 32 pre-task container IDs are present, with five unchanged captured
+states and 27 recorded state differences of unestablished cause; no commands
+operated on those containers. This is recorded separately from this task's new
+test-project deployment rather than claiming an unchanged whole-host snapshot.
+
+## Live user-prompt strategy cycle — 2026-11-07
+
+Following explicit user approval, seven actual editor prompts reached the configured
+OpenAI model. Tests covered an exact RSI amendment using a derived result summary,
+EMA/volume conditions, cash/fixed sizing, monthly/weekly frequency, partial exits,
+profile funding separation, news/ratings/sectors/Congress requirements and intraday
+timing. Three proposals were reviewed, accepted into drafts and explicitly published;
+unsupported/future-information requests and stale proposals were rejected. One
+unnecessary model refusal was retained; a clarification produced the requested
+event rules, whose missing-source readiness remained blocked.
+
+Four real 2018–2025 cases and four exact repeats completed. Generated RSI results
+exactly match the previously reconciled results. Independent Decimal arithmetic
+also reconciles all 4,022 marks/decisions and 284 fills of the new monthly/weekly
+rules. Compare and annual/performance timelines render correctly. All 27 original
+results, published versions and dataset hashes remain unchanged; this isolated
+project now retains 35 completed runs. No application/engine/container changes
+were needed. Full checks rerun: 231 backend including PostgreSQL, 42 frontend,
+Ruff/format/Prettier/build pass. No new credentials were needed.
+
+The earlier external-disclosure approval blocker is resolved for these tests.
+Read the [prompt matrix, results, false refusal and remaining data limits](llm-user-workflow-verification-2026-11-07.md).
+
+## Full-cycle final browser and evidence checks — 2026-11-07
+
+The isolated Docker application on loopback 18082 passes all 17 final research
+browser checks: comparison, decision/source inspection, funded reports, all 2,011
+decision markers, actual brush zoom, selection from a zoomed chart, retained
+zoom after financial-measure changes and mobile rendering. Both marker-rendering
+and zoom-reset defects are fixed; 42 frontend tests and build/format checks pass.
+The engine and saved financial results are unchanged. The cycle's earlier 231
+backend/PostgreSQL tests remain passing evidence; they were not rerun during this
+read-only browser continuation.
+
+All 27 result hashes, published versions and the accounting dataset hash still
+match the saved post-persistence snapshot. The original November 6 audit verified
+all 27 pre-existing containers unchanged. Today's read-only comparison finds 23
+original IDs still present and unchanged, while four original IDs are absent;
+no operations were performed on those resources. These observations are recorded
+separately rather than claiming the entire old host snapshot still matches.
+
+At the end of this earlier browser stage, the local manual cycle was complete
+and external results-to-LLM testing awaited approval; no summary had been sent.
+The subsequent approved live test above supersedes that blocker. See
+[the original full-cycle report](full-cycle-verification-2026-11-06.md).
+
+## Full-cycle isolated Docker and real-data test — 2026-11-06
+
+**Demonstrated:** new isolated Docker project on loopback 18082 with own volume,
+migration 005/no drift, actual UI/worker onboarding for AAPL/MSFT/SPY, real
+2018–2025 strategy cases, explicit schema-validated RSI v1→v2 amendment and
+continuous annual/quarter/month comparison. Thirteen primary cases and 13 exact
+repeats pass, including fixed SGD 500 monthly deposits and monthly DCA. Independent
+stdlib accounting reconciles 52,286 strategy/benchmark marks, 26,143 decisions,
+1,064 fills and 1,570 strategy ledger entries. Three funded synthetic future-input
+mutation diagnostics retain identical 1,259-session earlier prefixes.
+
+A 9.1 MB backup restores into a second fresh PostgreSQL/API with all 26 results,
+source exports, profiles, strategy versions and company packages unchanged.
+Queued work resumes with the expected exact result, both after restore and after
+restarting only the new source project. The retained test app has 27 completed
+runs. All 27 pre-existing containers retain their original IDs/start times,
+restart counts and mount membership; existing 18080 remains unchanged.
+
+A full-history UI marker slowdown was found and fixed using grouped point-only
+series, retaining every decision. Current checks: 231 backend/PostgreSQL tests,
+42 frontend tests, lint/format/build and final research browser checks pass.
+**Not run:** the external LLM amendment call awaits explicit approval for the
+strategy plus derived-result payload; automatic approval review rejected that
+outbound step. The cycle uses an explicit local amendment and retains its mixed
+outcome. A journal artifact is evidence, not a newly implemented journal UI.
+See [full measured results, backup and approval scope](full-cycle-verification-2026-11-06.md).
+
+## User-selected company regression coverage — 2026-11-06
+
+Added 14 network-isolated backend cases that carry user-selected symbols, custom
+benchmarks, dates, warm-up and event lookback from request through collection,
+evidence review and immutable package creation. Cases cover AMD/CVS, a class-share
+symbol and an explicitly fictional ticker, plus same-symbol benchmarks, repeated
+selection/reuse, cross-company evidence isolation, invalid selections and an
+unresolved identity. All market/source fixtures are labeled SYNTHETIC and do not
+qualify real histories for those companies. Frontend selection tests now exercise
+three ticker/date/benchmark combinations and verify the displayed job matches.
+
+**Latest checks:** 230 backend tests pass; one PostgreSQL integration test is
+skipped because `TEST_POSTGRES_URL` is unset. All 36 frontend tests, build,
+Ruff lint/format and Prettier pass. The earlier 217-test PostgreSQL run and 17 live
+browser checks below remain separate evidence; neither was rerun in this
+follow-up. No application behavior, database, container or provider configuration
+changed. See [selection test evidence](company-onboarding-verification-2026-11-06.md#user-selected-company-regression-follow-up)
+and [next research work](continuous-research.md#recommended-next-deliverable).
+
+## Requested-company onboarding — 2026-11-06
+
+**Demonstrated in isolation:** ticker/date request UI, persistent worker jobs,
+raw evidence/hashes, immutable reports, explicit atomic review/packages and reuse
+of reviewed revisions. Newly collected NVDA evidence includes eight SEC filings,
+the June ten-for-one split and nominal post-split dividend. Four real Apr–Jul 2024 rules
+and their exact repeats pass; independent Decimal calculations reconcile 340 daily
+cash/equity marks, all four fills and 85 SEC event decisions. A second request
+submitted through the UI reuses the same reviewed accounting/SEC IDs and keeps
+historical sectors blocked. All eight results and the original package survive
+native API restart unchanged.
+
+**Checks:** 217 backend tests including disposable PostgreSQL, 34 frontend tests,
+Ruff/format/Prettier/build and 17 Chromium checks pass. SQLite/PostgreSQL migration 005,
+drift, immutable triggers, concurrent claims, cancellation, evidence attacks and
+publication rollback are covered. No simulation behavior or engine code changed.
+
+**Not deployed:** the existing Docker application on 18080 and every pre-existing
+container/database remain untouched. Native 18081 and a new disposable PostgreSQL
+on 15439 supplied isolated evidence; this is not whole-stack Docker verification.
+Other collector capabilities, exact original delivery clocks and full-period NVDA
+qualification remain unverified/blocked as appropriate. See [actual outputs and
+limits](company-onboarding-verification-2026-11-06.md), [workflow/configuration](company-onboarding.md)
+and [diagram guide](data-workflow.html#on-demand).
+
+## Real equity and event-source acceptance — 2026-11-06
+
+**Demonstrated:** 13 real 2018–2025 cases and 13 exact repeats: hold, SMA20/50
+and RSI14 on AAPL/MSFT/SPY, plus fixed BLS/SEC integration rules on AAPL/MSFT.
+Independent stdlib arithmetic reconciles 52,286 daily strategy/benchmark marks,
+26,143 decisions, 516 strategy fills and 1,080 ledger entries. Annual reports,
+cash references, two AAPL compatibility controls and three earlier SPY controls
+match; all 38 prior result hashes remain unchanged. Synthetic in-memory future
+mutations leave three 1,008-session earlier prefixes unchanged. The complete
+backend suite passes 182 tests with one PostgreSQL test skipped because
+TEST_POSTGRES_URL is unset; Ruff passes. Native HTTP tests work with permitted
+socket access. The standalone results report passes ten Chromium desktop/mobile
+checks; the chart screenshot was visually inspected. No engine/application code
+or container configuration changed.
+
+These are fixed-rule in-sample results under declared reference-FX and source
+availability policies, not exact delivery-vintage certification or proof of
+strategy improvement. Broader news, sector and intraday acceptance remain open; the later bounded
+onboarding verification above supersedes the earlier coordinator gap. See [measured results, run IDs and limits](real-equity-acceptance-2026-11-06.md)
+and the [interactive performance/annual chart](real-equity-results-2026-11-06.html).
+
+## AAPL/MSFT accounting and deployed source review — 2026-11-06
+
+Reviewed accounting dataset `526cf606-bbff-4d89-8b43-00eeaa5fc16f` now contains
+7,542 AAPL/MSFT/SPY daily bars, 2,494 reviewed reference-FX observations and 121
+actions. Original issuer evidence resolves missing dates, four MSFT workbook
+numeric artifacts and one declaration-date discrepancy. Existing HTTP imports,
+review children, lineage, export hashes and duplicate identities pass. New York
+coverage boundaries were corrected through new immutable revisions; final BLS
+and SEC sources pass all 335 visibility pairs and full-period readiness. Raw
+sources and missing sector histories are correctly blocked. All 38 earlier
+completed result hashes are preserved; 14 targeted financial/source tests and
+Ruff pass. No new backtest, browser import or container restart was performed.
+See [actual revisions, checks and research-policy limits](company-intake-verification-2026-11-06.md)
+and the [requested-company workflow and current limits](company-onboarding.md).
+
+## SEC/BLS primary sources — 2026-11-06
+
+BLS extraction and field-specific correction review produced 190 unreviewed
+headline events; 96 source releases passed 288 table comparisons. SEC retrieval
+retained 145 submission texts, 2,050 embedded documents, 268 checked item headings
+and two separately linked amendments. Candidate schema, isolated route-function
+retention, 335 synthetic diagnostic availability pairs and exact extractor
+reproduction pass. Native HTTP TestClient startup stalled; deployed import and
+real source-driven strategy acceptance remain unverified. The exports retain
+explicit BLS five-minute and SEC next-session-close research availability
+assumptions and have not been approved. See [actual source evidence and limits](primary-source-verification-2026-11-06.md).
+
 ## Historical strategy capabilities — engine 2.0.0, 2026-11-05
 
 **Verified:** independent financial/causal gate before editor work; 183 backend

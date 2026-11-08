@@ -52,7 +52,7 @@ class NewsFetch(FetchRange):
     access: Literal["public", "subscription"] = "subscription"
 
 
-def alpaca_pages(path, params):
+def alpaca_pages(path, params, *, capture=None):
     config = settings()
     if (
         not config.alpaca_api_key.get_secret_value()
@@ -81,6 +81,8 @@ def alpaca_pages(path, params):
                 )
             if len(response.content) > 20_000_000:
                 raise ValueError("provider response exceeded the preparation limit")
+            if capture is not None:
+                capture(response)
             payload = json.loads(response.content, parse_float=Decimal)
             hashes.append(hashlib.sha256(response.content).hexdigest())
             pages.append(payload)
@@ -202,7 +204,7 @@ class TextOnly(HTMLParser):
         self.parts.append(value)
 
 
-def fetch_news(body: NewsFetch):
+def fetch_news(body: NewsFetch, *, capture=None):
     pages, hashes = alpaca_pages(
         "/v1beta1/news",
         {
@@ -213,7 +215,15 @@ def fetch_news(body: NewsFetch):
             "limit": 50,
             "include_content": "true",
         },
+        capture=capture,
     )
+    return normalize_news(body, pages, hashes)
+
+
+def normalize_news(body: NewsFetch, pages, hashes):
+    """Replay retained provider pages without backdating current article versions."""
+    start = datetime.combine(body.start, datetime.min.time(), UTC)
+    end = datetime.combine(body.end + timedelta(days=1), datetime.min.time(), UTC)
     events = []
     ids = set()
     for page in pages:
@@ -222,12 +232,22 @@ def fetch_news(body: NewsFetch):
             if identifier in ids:
                 raise ValueError("duplicate news identity; import explicit source revisions")
             ids.add(identifier)
+            if not article.get("created_at") or not article.get("updated_at"):
+                raise ValueError("news requires publication and current-version update timestamps")
             published = datetime.fromisoformat(article["created_at"].replace("Z", "+00:00"))
-            updated = datetime.fromisoformat(
-                article.get("updated_at", article["created_at"]).replace("Z", "+00:00")
-            )
+            updated = datetime.fromisoformat(article["updated_at"].replace("Z", "+00:00"))
+            if published.tzinfo is None or updated.tzinfo is None:
+                raise ValueError("news timestamps require explicit timezones")
+            if not set(article.get("symbols", [])) & set(body.symbols):
+                raise ValueError("news lacks any requested symbol association")
             if updated < published:
                 raise ValueError("article update precedes original publication")
+            if published < start and start <= updated < end:
+                # The endpoint can return older articles updated in this query window.
+                # Retained pages keep them; this candidate is a publication cohort.
+                continue
+            if not start <= published < end:
+                raise ValueError("news publication lies outside requested half-open range")
             parser = TextOnly()
             parser.feed(str(article.get("content") or article.get("summary") or ""))
             text = " ".join(parser.parts)[:30000]
@@ -270,7 +290,7 @@ def fetch_news(body: NewsFetch):
         name=f"Alpaca/Benzinga company news {body.start}–{body.end}",
         source="alpaca-benzinga",
         source_url="https://data.alpaca.markets/v1beta1/news",
-        availability_policy="Current article versions only; gated at max(created_at,updated_at), never backdated revised text. Vendor coverage is not all public news. Optional deterministic keyword-v1 tags are in-sample research definitions, not an LLM's retrospective knowledge. Public dissemination/access and coverage require review.",
+        availability_policy="Current article versions only; gated at max(created_at,updated_at), never backdated revised text. Vendor coverage is not all public news. Older articles returned because of updates within the query window are excluded from this publication cohort, not backdated or treated as new publications. Query exhaustion does not certify the original historical archive. Optional deterministic keyword-v1 tags are in-sample research definitions, not an LLM's retrospective knowledge. Public dissemination/access and coverage require review.",
         coverage_start=start,
         coverage_end=end,
         symbols=body.symbols,

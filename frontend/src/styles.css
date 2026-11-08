@@ -862,6 +862,40 @@ select {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 18px;
 }
+.company-onboarding code {
+  overflow-wrap: anywhere;
+}
+.company-onboarding .checkbox {
+  margin: 12px 0;
+}
+.company-onboarding .panel > button {
+  margin: 4px;
+  max-width: calc(100% - 8px);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.company-onboarding fieldset {
+  border: 1px solid #dbe4da;
+  border-radius: 6px;
+  margin: 16px 0;
+  padding: 12px;
+}
+.company-onboarding .source-capability {
+  border-bottom: 1px solid #e5ebda;
+  padding: 12px 0;
+}
+.company-review {
+  padding: 16px 22px 22px;
+}
+.company-review > p,
+.company-review > ul {
+  margin: 12px 0;
+}
+.company-review > h3,
+.company-review > [role='status'] {
+  margin-top: 24px;
+}
 .segmented {
   display: inline-flex;
   background: #f2f5eb;
@@ -1423,4 +1457,111 @@ footer span:last-child {
 .synthetic-overview {
   grid-column: 1 / -1;
   margin-bottom: 0;
+}
+.strategy-chat {
+  display: grid;
+  gap: 1rem;
+}
+.strategy-chat label {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.7rem 0;
+}
+.strategy-chat [role='log'] {
+  max-height: 36rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  padding-right: 0.4rem;
+}
+.chat-turn {
+  border-top: 1px solid var(--border, #ccc);
+  padding: 1rem 0;
+}
+.chat-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.chat-audit {
+  border: 1px solid var(--border, #ccc);
+  padding: 0.6rem;
+  overflow-wrap: anywhere;
+}
+.chat-source {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--border, #ccc);
+}
+.chat-audit pre {
+  max-height: 18rem;
+  overflow: auto;
+}
+.chat-estimate {
+  border-left: 3px solid #d7a340;
+  padding: 0.6rem 1rem;
+  margin: 0.7rem 0;
+}
+.chat-question button {
+  margin: 0.3rem;
+}
+.chat-activity {
+  font-size: 0.85rem;
+}
+.conversation-history {
+  width: min(60rem, calc(100vw - 2rem));
+  max-height: 90vh;
+  overflow: auto;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 0.8rem;
+  padding: 1.2rem;
+  color: inherit;
+  background: var(--surface, #fff);
+}
+.conversation-history::backdrop {
+  background: #0008;
+}
+.conversation-history header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.conversation-history pre {
+  max-height: 25rem;
+  overflow: auto;
+}
+
+.research-journal pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 26rem;
+  overflow: auto;
+  padding: 12px;
+  background: #f6f8f0;
+}
+.research-journal code {
+  overflow-wrap: anywhere;
+}
+.research-journal ol {
+  margin: 18px 22px;
+  padding-left: 18px;
+}
+.research-journal li {
+  margin-bottom: 20px;
+}
+
+.congress-review pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 26rem;
+  overflow: auto;
+}
+.congress-review code,
+.congress-review td {
+  overflow-wrap: anywhere;
+}
+.congress-review ol,
+.congress-review [role='alert'] {
+  margin: 18px 22px;
+}
+.congress-review li {
+  margin-bottom: 14px;
 }

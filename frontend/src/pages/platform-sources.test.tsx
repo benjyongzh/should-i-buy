@@ -37,6 +37,8 @@ it('requires explicit source review and complete coverage while hiding future ne
       return {
         data: {
           kind: 'events',
+          bars: [],
+          states: [],
           events: [
             {
               event_id: 'one',
@@ -69,6 +71,7 @@ it('requires explicit source review and complete coverage while hiding future ne
   const user = userEvent.setup()
   await user.click(await screen.findByRole('button', { name: raw.name }))
   await screen.findByLabelText('Source review note')
+  await screen.findByText(/"title": "Future source text"/)
   await user.type(screen.getByLabelText('Historical cutoff UTC'), '2020-01-02T16:00')
   expect(screen.queryByText(/"title": "Future source text"/)).not.toBeInTheDocument()
   await user.type(
@@ -84,3 +87,50 @@ it('requires explicit source review and complete coverage while hiding future ne
   await waitFor(() => expect(screen.getByText(/Reviewed immutable revision/)).toBeInTheDocument())
   expect(rows).toHaveLength(2)
 })
+
+it.each(['intraday', 'universe'] as const)(
+  'renders %s records from a complete exported payload',
+  async (kind) => {
+    const source = {
+      id: kind,
+      kind,
+      name: `SYNTHETIC ${kind}`,
+      content_hash: 'a'.repeat(64),
+      synthetic: true,
+      reviewed: false,
+      complete: false,
+      symbols: ['SPY'],
+      category_catalog: [],
+      row_count: 1,
+      access_coverage: 'public_only',
+      availability_policy: 'SYNTHETIC source',
+      coverage_start: '2020-01-01T00:00:00Z',
+      coverage_end: '2020-02-01T00:00:00Z',
+    }
+    const record = { symbol: 'SPY', available_at: '2020-01-02T15:00:00Z' }
+    api.mockImplementation(async (path: string) => {
+      if (path === '/strategy-inputs') return [source]
+      if (path === '/strategy-capabilities') return { configured: {} }
+      if (path.endsWith('/export'))
+        return {
+          data: {
+            kind,
+            bars: kind === 'intraday' ? [record] : [],
+            states: kind === 'universe' ? [record] : [],
+            events: [],
+          },
+        }
+      throw new Error(path)
+    })
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <StrategySources />
+      </QueryClientProvider>,
+    )
+    await userEvent.setup().click(await screen.findByRole('button', { name: source.name }))
+    await screen.findByText(/"symbol": "SPY"/)
+    expect(screen.getByText(/1 available records/)).toBeInTheDocument()
+  },
+)

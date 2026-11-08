@@ -10,6 +10,8 @@ import { Badge, ErrorBox, Field, PageTitle, Panel } from '../components/ui'
 import { RuleEditor } from '../components/RuleEditor'
 import { AdvancedStrategyControls } from '../components/AdvancedStrategyControls'
 import { TradingControls, defaultTrading } from '../components/TradingControls'
+import { StrategyChat } from '../components/StrategyChat'
+import { ConversationHistory } from '../components/ConversationHistory'
 import { crossover, defaultStrategy, rsi } from '../types'
 import type { Strategy, StrategyConfig, Version } from '../types'
 
@@ -17,7 +19,7 @@ const formSchema = z.object({
   name: z.string().min(1, 'Give the strategy a name').max(160),
   description: z.string().max(5000),
 })
-interface Proposal {
+export interface Proposal {
   id: string
   config: StrategyConfig
   metadata_json: {
@@ -56,6 +58,9 @@ export function StrategyEditor() {
   const [proposal, setProposal] = useState<Proposal | null>(null)
   const [reviewedProposal, setReviewedProposal] = useState(false)
   const [diff, setDiff] = useState<string[]>([])
+  const [conversationView, setConversationView] = useState<
+    { id: string; number: number } | 'current' | null
+  >(null)
   const {
     register,
     handleSubmit,
@@ -429,6 +434,13 @@ export function StrategyEditor() {
                         <button
                           type="button"
                           className="link-button"
+                          onClick={() => setConversationView({ id: v.id, number: v.number })}
+                        >
+                          Read conversation through version {v.number}
+                        </button>
+                        <button
+                          type="button"
+                          className="link-button"
                           onClick={() => restore.mutate(v.id)}
                         >
                           Use as draft
@@ -464,27 +476,51 @@ export function StrategyEditor() {
                 <p className="muted">Your first published version will appear here.</p>
               )}
             </Panel>
-            <Panel title="Strategy assistant" action={<Sparkles size={17} />}>
-              <p className="muted">
-                Describe a change to your saved draft. Review the proposed JSON before accepting it.
-              </p>
-              <textarea
-                aria-label="Strategy assistant prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Only enter when RSI is below 65…"
-              />
-              <button
-                type="button"
-                className="secondary full"
-                disabled={isNew || !prompt || operation.isPending}
-                onClick={() => operation.mutate('propose')}
-              >
-                {operation.isPending ? 'Working…' : 'Propose changes'}
-              </button>
-              {isNew && <small>Save the draft to enable the assistant.</small>}
+            {!isNew && strategy.data && (
+              <Panel title="Strategy conversation">
+                <p>One permanent conversation for this strategy.</p>
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => setConversationView('current')}
+                >
+                  Read complete conversation
+                </button>
+                <StrategyChat
+                  key={id}
+                  strategy={strategy.data}
+                  onProposal={(p) => {
+                    setProposal(p)
+                    setReviewedProposal(false)
+                  }}
+                />
+              </Panel>
+            )}
+            <Panel title="Proposal review" action={<Sparkles size={17} />}>
+              <details>
+                <summary>Single-request compatibility assistant</summary>
+                <p className="muted">
+                  For a complete, unambiguous request. Use the strategy conversation for
+                  clarification and streaming. Review the proposed JSON before accepting it.
+                </p>
+                <textarea
+                  aria-label="Strategy assistant prompt"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Only enter when RSI is below 65…"
+                />
+                <button
+                  type="button"
+                  className="secondary full"
+                  disabled={isNew || !prompt || operation.isPending}
+                  onClick={() => operation.mutate('propose')}
+                >
+                  {operation.isPending ? 'Working…' : 'Propose changes'}
+                </button>
+                {isNew && <small>Save the draft to enable the assistant.</small>}
+              </details>
               {proposal && (
-                <div className="proposal">
+                <div className="proposal" id="strategy-proposal-review">
                   <Badge value="proposal" />
                   <small>
                     {proposal.metadata_json.model} · {proposal.metadata_json.prompt_version}
@@ -544,6 +580,14 @@ export function StrategyEditor() {
           </aside>
         </div>
       </form>
+      {conversationView && id && (
+        <ConversationHistory
+          key={conversationView === 'current' ? 'current' : conversationView.id}
+          strategyId={id}
+          version={conversationView === 'current' ? undefined : conversationView}
+          onClose={() => setConversationView(null)}
+        />
+      )}
     </>
   )
 }

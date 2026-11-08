@@ -1,6 +1,7 @@
 import csv
 import io
 import time
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 from datetime import time as day_time
 from typing import Literal, Protocol
@@ -33,6 +34,9 @@ def csv_records(content: str) -> list[dict]:
 
 class AlpacaProvider:
     """Read-only, raw daily bars. No brokerage endpoint exists in this adapter."""
+
+    def __init__(self, response_observer: Callable[[httpx.Response], None] | None = None):
+        self.response_observer = response_observer
 
     def fetch(
         self, symbols: list[str], start: date, end: date, *, feed: Literal["iex", "sip"] = "iex"
@@ -75,6 +79,8 @@ class AlpacaProvider:
                     raise ValueError(
                         f"Alpaca historical data request failed (HTTP {response.status_code}); check data entitlements/rate limits"
                     )
+                if self.response_observer:
+                    self.response_observer(response)
                 payload = response.json()
                 for symbol, values in (payload.get("bars") or {}).items():
                     for value in values:

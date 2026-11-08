@@ -9,12 +9,17 @@ from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
+from app.api.congress import router as congress_router
+from app.api.congress_collections import router as congress_collections_router
+from app.api.journal import router as journal_router
+from app.api.onboarding import router as onboarding_router
 from app.api.research import router as research_router
 from app.api.routes import router
 from app.api.strategy_inputs import router as strategy_inputs_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.db.session import engine
+from app.llm.chat_routes import router as chat_router
 from app.llm.routes import router as llm_router
 
 configure_logging()
@@ -27,8 +32,13 @@ app.add_middleware(
 )
 app.include_router(router)
 app.include_router(research_router)
+app.include_router(journal_router)
+app.include_router(congress_router)
+app.include_router(congress_collections_router)
 app.include_router(strategy_inputs_router)
 app.include_router(llm_router)
+app.include_router(chat_router)
+app.include_router(onboarding_router)
 logger = logging.getLogger(__name__)
 
 

@@ -1,5 +1,23 @@
 # What to supply for historical strategies
 
+The [retail information pilot](retail-information-pilot-2026-11-08.md) now verifies
+AAPL/MSFT news and original insider/earnings samples using existing access.
+A qualified retail provider can supply information without direct Senate access.
+Samples are retained in the source UI as unreviewed/incomplete; full 2018–2025
+coverage, individual analyst changes and historical versions remain separate gates.
+Quiver API access is paid and optional; no new key was needed for this pilot.
+
+Current follow-up: one permanent strategy conversation has complete eligible recall
+and [read-only per-version transcripts](conversation-history-verification-2026-11-07.md).
+Personal non-commercial use is confirmed for Congress research; original reports
+and conservative public-observation proofs are retained. The two imported raw
+observations remain incomplete/unreviewed; no new key is needed, and complete
+Congress company/filer coverage still requires qualification. See
+[current Congress evidence](congress-qualification-2026-11-07.md).
+
+For a visual overview of sources, review gates and the simulation clock, open the
+[historical data workflow](data-workflow.html).
+
 Target research period: **2018–2025, replayed sequentially**, plus indicator
 warm-up and event lookback before the first decision. Every rerun is retained;
 repeated tuning against the same history is labeled in-sample. Period reports
@@ -12,16 +30,25 @@ Configuration flags do not establish account entitlements or historical coverage
 
 | Capability | Source/path implemented | What is still needed |
 |---|---|---|
-| Daily SPY accounting | Existing reviewed combined daily/FX/dividend revision, 2016–2025 | No new key. Existing real daily acceptance remains preserved; new features need their own acceptance. |
+| Daily accounting: SPY, AAPL and MSFT | Reviewed combined raw daily/FX/action revision, 2016–2025; [real acceptance](real-equity-acceptance-2026-11-06.md) | No new key. Fixed hold/SMA/RSI acceptance and bounded AAPL/MSFT BLS/SEC checks pass. Additional tickers need their own action/price review. |
+| SEC company filing events | Reviewed AAPL/MSFT 8-K/8-K/A stream, 2018–2025, with literal item tags and separate amendments | No new key. Uses the explicit next-session-close research availability proxy; precise first-public delivery remains unverified. |
 | Intraday timing and indicators | Alpaca raw minute bars aggregated into complete regular-session intervals; JSON/CSV import | Existing Alpaca key may suffice. Verify SIP access for requested dates/symbols, review completeness and disclosed completion-delay/revision policy. Start with a short SPY slice. |
 | Historical sectors/security universe | Immutable state-transition JSON/CSV import | Historical classifications/membership and stable security identities, with effective and availability clocks, including starting state and changes. Supply MSFT/AAPL/CVS histories if comparing them. Current metadata is insufficient. |
 | Company news | Alpaca/Benzinga news preparation; archival JSON/CSV import | Check existing Alpaca news entitlement. Original article versions, titles/text, symbols, publication/availability/update clocks and coverage/access evidence. No promise of all news. |
 | Analyst changes | Benzinga individual ratings preparation or archival JSON/CSV | Optional **`BENZINGA_API_KEY`**, historical entitlement covering 2018–2025, and verified source timezone. Alternatively supply timestamped reports/exports. Require firm/analyst, original rating/nominal USD target and actual version clock. |
 | Congress trades | Typed historical JSON/CSV import and disclosure-gated rules | Original public House/Senate disclosures, identities/ticker mapping, amendment lineage, amount bounds and evidenced public-posting/first-seen times. Transaction/filing dates alone are insufficient. No Congress API key is required for file imports. |
 | Geopolitics/oil/sector events | Global/sector event streams and retained keyword rules | Timestamped source archives with declared coverage and historical access evidence; source tags or documented deterministic rules. No automatically comprehensive geopolitical feed is configured. |
-| Macro indicators | Existing reviewed FRED/external-series path; typed release import | Existing FRED key suffices for supported series preparation. Historical forecasts/consensus and release clocks are additional inputs for surprise rules. Latest revised macro values are insufficient. |
+| Macro indicators | Reviewed FRED/external-series path; reviewed BLS payroll/unemployment release stream | Existing FRED key suffices for supported series preparation; BLS needs no new key and uses the documented five-minute research delivery lag. Historical forecasts/consensus are additional inputs for surprise rules. Latest revised macro values are insufficient. |
 | Fear & Greed | Existing reviewed external-series CSV path | A lawful archive with observation, original availability, source/version evidence and coverage. No qualified automatic original-vintage history has been supplied. |
 | LLM authoring | Server structured-output strategy planning | Existing `LLM_API_KEY`, `LLM_MODEL`, optional `LLM_BASE_URL`. No brokerage key. Proposals still require review, draft acceptance and explicit publication. |
+
+Latest follow-up: [streaming strategy conversations](strategy-conversation.md)
+add clarification, source previews/audits and conditional research estimates with
+the existing key. [Intraday qualification](intraday-congress-verification-2026-11-07.md)
+now supplies 92 reviewed monthly AAPL/MSFT/SPY15-minute partitions. Four months with
+27 gaps block a complete 2018–2025 replay; a January 2019 window test passes.
+Congress needs a permitted-use basis and original public-availability archive,
+not merely a new API key. No qualified Congress revision has been supplied.
 
 For each additional equity, supply raw daily bars/warm-up, historical USD/SGD as
 required, and separately reviewed splits/dividends. Intraday bars cannot replace
@@ -85,3 +112,35 @@ Source review is an explicit attestation, not automated certification of vendor
 completeness. Current revised records are retained at their actual version clock;
 if originals are absent, early historical coverage remains unknown and cannot be
 honestly approved as complete for strategies depending on those originals.
+
+## Company onboarding configuration
+
+The new `/companies` workflow uses the existing server-side Alpaca credentials
+and `DATA_SOURCE_CONTACT_EMAIL` in both API and worker. No additional vendor key
+was needed for the real NVDA acceptance. It reuses reviewed historical FX for
+SGD; a FRED key alone does not mark a new FX revision reviewed. Initial automatic
+collection covers daily accounting and SEC filing presence only. Other requested
+capabilities stay blocked pending their source evidence. Deploy migration 005 and
+updated API/worker/frontend before using the page in a project environment;
+existing Docker services on 18080 have not been changed by this implementation.
+See [workflow and limits](company-onboarding.md) and [actual test evidence](company-onboarding-verification-2026-11-06.md).
+
+## Congress qualification update
+
+No extra key is needed for the tested House index/PDF/archive sources. The
+[canonical-ledger workflow](congress-source-workflow.md) now qualifies one narrow
+March2022 Pelosi filing cohort. Broader strategy requirements still need reviewed
+filer/company/date inventories, exact public-observation evidence, historical
+issuer identity and resolved original/amendment/instrument categories. Cross-year
+supporting indexes are now supported; Senate access remains outstanding. A sparse positive sample
+must not be relabeled full2018–2025 or all-Congress coverage.
+
+## Full Congress coverage input status
+
+House index access needs no new key. The all-filer PTR acquisition is running
+with explicit gaps and no automatic approval. Senate currently needs a normally
+accessible public browser session or permitted report exports; see the
+[normal-session instructions](congress-full-coverage.md). Do not provide session
+cookies or API credentials for this bridge. Current captures still need separate
+historical posting evidence, issuer/filer identity and amendment review before
+full2018–2025 Congress replay is available.
