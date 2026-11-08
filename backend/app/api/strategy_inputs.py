@@ -4,7 +4,6 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends
 from pydantic import Field
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.routes import dump, get
@@ -19,7 +18,7 @@ from app.models.entities import Dataset, Profile, StrategyInputRevision
 from app.schemas.domain import ProfileConfig, StrategyConfig, StrictModel
 from app.services.datasets import load_dataset
 from app.services.feature_inputs import resolve_features
-from app.services.strategy_inputs import checked_input, resolve_inputs, retain_input
+from app.services.strategy_inputs import checked_input, input_catalog, resolve_inputs, retain_input
 
 router = APIRouter(prefix="/api")
 
@@ -85,14 +84,7 @@ def summary(row):
 
 @router.get("/strategy-inputs")
 def list_inputs(db: Session = Depends(get_db)):
-    return [
-        summary(row)
-        for row in db.scalars(
-            select(StrategyInputRevision)
-            .order_by(StrategyInputRevision.created_at.desc())
-            .limit(1000)
-        )
-    ]
+    return input_catalog(db)
 
 
 @router.get("/strategy-inputs/schema")

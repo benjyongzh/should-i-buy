@@ -1,5 +1,9 @@
 # Retail information boundary: AAPL/MSFT source pilot
 
+The [free Congress / analyst source assessment](congress-dataset-assessment-2026-11-08.md)
+now records code-level timing and consolidation qualifications. Earnings source
+selection is confirmed as issuer releases plus original SEC filings/exhibits.
+
 The target is a retail investor using declared news/data feeds, with information
 arriving over time. Direct Senate access is not a prerequisite: a qualified retail
 provider can supply Congress information. Publisher/provider identity, delivery

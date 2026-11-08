@@ -1,5 +1,20 @@
 # What to supply for historical strategies
 
+[Executed qualification follow-up](retail-source-qualification-2026-11-08.md):
+45 snapshot shards and all retained House inventory IDs check out; the bounded
+Congress sample retains unknown public clocks. Ninety-eight literal analyst
+announcements are imported unreviewed, and two issuer/SEC earnings pairs are
+normalized as staging evidence. No new key or broad coverage approval is implied.
+
+[Free Congress dataset assessment](congress-dataset-assessment-2026-11-08.md):
+pinned upstream code and actual manifest are reviewed. It is relevant staging
+material, but its availability clock is filing-day end, not measured retail
+publication. Synthetic checks reproduce timing, ambiguous cross-document merging
+and later-contributor provenance. No broad dataset is imported or qualified.
+Earnings will use issuer investor-relations releases plus original SEC exhibits;
+free analyst work can start from explicit announcements in existing news access.
+Public ratings sites are corroboration candidates, not verified free bulk history.
+
 The [retail information pilot](retail-information-pilot-2026-11-08.md) now verifies
 AAPL/MSFT news and original insider/earnings samples using existing access.
 A qualified retail provider can supply information without direct Senate access.

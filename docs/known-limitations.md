@@ -1,5 +1,38 @@
 # Known limitations and remaining release verification
 
+
+**Latest full-history follow-up:** 64 quarterly issuer/SEC pairs and 128 GAAP facts
+are verified across 2018–2025. The 192-event source is reviewed only with explicit
+modeled next-session-close publication/availability; exact original retail timing
+is unknown. 35,854 current-version news records and 1,262 literal analyst actions
+remain unreviewed/incomplete; completed pagination is not original-vintage or
+comprehensive coverage. One malformed record is quarantined; missing data is not
+fabricated. The controlled earnings gate reduces drawdown but lowers ending equity
+versus baseline, and remains in-sample research. 339 backend/PostgreSQL and 62
+frontend tests pass, Ruff/build pass; engine unchanged. No new key required.
+[Actual results, sources and remaining inputs](full-history-earnings-experiment-2026-11-08.md).
+
+Earlier phase notes below retain their then-current scope; full-history acquisition
+supersedes the earlier sample-only counts, not their vintage/access limitations.
+
+The full-history load exposed an automatic API restart and source-catalog UI
+failure in the existing deployment. A metadata-only SQL fix passes 339 backend
+checks and 12 browser assertions in a separate read-only API, with all 230 summaries
+identical and response time 2.44–2.53s instead of 25.23s. It is **not deployed** over
+existing containers. All 58 identities, 11 prior runs and 212 source exports remain;
+57 runtimes are unchanged and the API records one automatic restart. Exact cause
+is unconfirmed. See the report before treating the running source UI as verified.
+
+**Latest executed free-source pilot:** all 45 pinned Congress files and all 6,234
+House document identities validate; six bounded rows remain staging evidence.
+Producer clocks are filing-day proxies, broad purchase codes can describe option
+exercises, and Senate originals remain independently inaccessible here. Eight
+news-derived analyst revisions contain 98 literal announcements, but are
+unreviewed/incomplete. Two issuer/SEC earnings pairs have checked figures and
+unknown verified-public clocks; consensus/surprise remain null. No new strategy
+performance or broad source qualification is claimed. 325 backend/PostgreSQL and
+62 frontend tests pass. See the [executed pilot](retail-source-qualification-2026-11-08.md).
+
 **Latest retail-feed pilot:** 1,282 real AAPL/MSFT news records and 58 original SEC
 filings are checked; 11 source revisions are imported as unreviewed/incomplete.
 Nine news windows sample 2018–2025 and recent access, rather than covering the

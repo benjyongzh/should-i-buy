@@ -78,3 +78,65 @@ def frozen_inputs(db, provenance):
     if actual != bindings:
         raise ValueError("frozen strategy input identity/hash mismatch")
     return sources
+
+
+def input_catalog(db):
+    """Read metadata in SQL; never materialize every archive's bodies to list it.
+
+    Catalog labels/counts are informational. Import/review, full export, readiness
+    and frozen run resolution still validate the entire immutable content/hash.
+    """
+    import json
+    from datetime import UTC
+
+    from sqlalchemy import func
+
+    payload = StrategyInputRevision.payload
+    postgres = db.get_bind().dialect.name == "postgresql"
+    if postgres:
+        metadata = payload.op("-")("bars").op("-")("states").op("-")("events")
+        count = sum(
+            func.coalesce(func.jsonb_array_length(payload[key]), 0)
+            for key in ("bars", "states", "events")
+        )
+    else:
+        metadata = func.json_remove(payload, "$.bars", "$.states", "$.events")
+        count = sum(
+            func.coalesce(func.json_array_length(payload, "$." + key), 0)
+            for key in ("bars", "states", "events")
+        )
+    query = (
+        select(
+            StrategyInputRevision.id,
+            StrategyInputRevision.created_at,
+            StrategyInputRevision.kind,
+            StrategyInputRevision.content_hash,
+            metadata.label("metadata"),
+            count.label("row_count"),
+        )
+        .order_by(StrategyInputRevision.created_at.desc())
+        .limit(1000)
+    )
+    defaults = {
+        key: field.get_default(call_default_factory=True)
+        for key, field in StrategyInput.model_fields.items()
+        if key not in {"bars", "states", "events"} and not field.is_required()
+    }
+    result = []
+    for row in db.execute(query):
+        info = json.loads(row.metadata) if isinstance(row.metadata, str) else row.metadata
+        stamp = (
+            row.created_at.replace(tzinfo=UTC) if row.created_at.tzinfo is None else row.created_at
+        )
+        result.append(
+            {
+                **defaults,
+                **info,
+                "id": row.id,
+                "created_at": stamp.isoformat(),
+                "kind": row.kind,
+                "content_hash": row.content_hash,
+                "row_count": row.row_count,
+            }
+        )
+    return result

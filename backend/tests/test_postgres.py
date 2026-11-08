@@ -50,6 +50,9 @@ def test_postgres_migrations_immutable_inputs_and_concurrent_claims(monkeypatch)
         from test_intake_sources import assert_immutable_evidence
 
         assert_immutable_evidence(factory)
+        from test_source_catalog import assert_catalog_projection
+
+        assert_catalog_projection(factory)
         from test_conversation_versions import assert_postgres_conversation_immutability
 
         assert_postgres_conversation_immutability(factory)

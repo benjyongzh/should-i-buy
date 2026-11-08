@@ -1,5 +1,19 @@
 # Trading Lab
 
+[Full 2018–2025 earnings experiment](docs/full-history-earnings-experiment-2026-11-08.md):
+64 original quarterly pairs, 35,854 current-version news records and 1,262 literal
+analyst announcements. Only the explicit daily earnings research proxy is reviewed.
+The controlled entry gate reduces drawdown but lowers ending equity. 339 backend/
+PostgreSQL and 62 frontend tests pass. [Flowchart and visual comparison](docs/earnings-experiment.html).
+A large-catalog runtime fix is verified in isolation; the existing deployment still
+needs that fix. One automatic API restart was observed; prior immutable data is
+preserved and no existing container was manually restarted or replaced.
+
+[Free-source qualification](docs/retail-source-qualification-2026-11-08.md): pinned
+Congress inventory/document checks, 98 news-derived analyst announcements retained
+for review, and two checked issuer/SEC earnings pairs. Historical coverage and
+public clocks remain explicit review gates.
+
 [Retail information pilot](docs/retail-information-pilot-2026-11-08.md): real
 AAPL/MSFT news, insider and earnings samples are retained for review; continuous
 historical coverage is not yet approved. Quiver API is paid, optional and not
@@ -21,7 +35,7 @@ clarification, shows selected-source audits and labels evidence-based research
 estimates. Each strategy has one permanent conversation with full eligible recall
 and [read-only publication transcripts](docs/conversation-history-verification-2026-11-07.md).
 Review, draft acceptance and publication remain separate. Latest checks:
-304 backend/PostgreSQL tests and 62 frontend pass. [Intraday source qualification](docs/intraday-congress-verification-2026-11-07.md)
+339 backend/PostgreSQL tests and 62 frontend pass. [Intraday source qualification](docs/intraday-congress-verification-2026-11-07.md)
 supplies 92 complete monthly partitions; four incomplete months and broad Congress
 histories remain blocked. [Congress qualification](docs/congress-qualification-2026-11-07.md)
 now retains original reports and bounded archive-clock evidence; no complete

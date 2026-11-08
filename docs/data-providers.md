@@ -1,5 +1,46 @@
 # Data providers and contracts
 
+## Full 2018–2025 earnings experiment — 2026-11-08
+
+The [executed full-history report](full-history-earnings-experiment-2026-11-08.md)
+verifies 64 issuer/SEC quarterly pairs and independently reconciles 128 GAAP facts.
+A 192-event immutable child is reviewed only under the explicit next-session-close
+research availability proxy; exact public delivery remains unverified. All 96 month
+news queries complete: 35,854 news events and 1,262 literal analyst announcements
+are imported as 16 yearly **unreviewed/incomplete** sources. One blank-headline row
+is quarantined and 68 older publications are explicitly excluded from update windows.
+
+A streamed LLM proposes the exact predeclared earnings-entry gate. Explicit draft
+acceptance/publication, version transcript, journal conclusion and exact candidate
+repeat pass. The outcome is mixed: SGD 29,819.54 baseline versus 23,302.66 candidate,
+with maximum drawdown 32.19% versus 19.49%. All 2018–2025 periods are retained.
+Independent reconstruction checks 8,044 marks, 8,044 decisions, 150 fills and 308
+ledger entries. **339 backend/PostgreSQL and 62 frontend tests pass**, Ruff/build
+pass. Engine 2.0.0 is unchanged. [Visual report](earnings-experiment.html).
+
+The full-history load exposed an automatic API restart and source-catalog UI
+failure in the existing deployment. A metadata-only SQL fix passes 339 backend
+checks and 12 browser assertions in a separate read-only API, with all 230 summaries
+identical and response time 2.44–2.53s instead of 25.23s. It is **not deployed** over
+existing containers. All 58 identities, 11 prior runs and 212 source exports remain;
+57 runtimes are unchanged and the API records one automatic restart. Exact cause
+is unconfirmed. See the report before treating the running source UI as verified.
+
+[Executed qualification follow-up](retail-source-qualification-2026-11-08.md):
+45 snapshot shards and all retained House inventory IDs check out; the bounded
+Congress sample retains unknown public clocks. Ninety-eight literal analyst
+announcements are imported unreviewed, and two issuer/SEC earnings pairs are
+normalized as staging evidence. No new key or broad coverage approval is implied.
+
+[Free Congress dataset assessment](congress-dataset-assessment-2026-11-08.md):
+pinned upstream code and actual manifest are reviewed. It is relevant staging
+material, but its availability clock is filing-day end, not measured retail
+publication. Synthetic checks reproduce timing, ambiguous cross-document merging
+and later-contributor provenance. No broad dataset is imported or qualified.
+Earnings will use issuer investor-relations releases plus original SEC exhibits;
+free analyst work can start from explicit announcements in existing news access.
+Public ratings sites are corroboration candidates, not verified free bulk history.
+
 The [retail information pilot](retail-information-pilot-2026-11-08.md) now verifies
 AAPL/MSFT news and original insider/earnings samples using existing access.
 A qualified retail provider can supply information without direct Senate access.

@@ -1,5 +1,62 @@
 # Implementation milestones and verification
 
+## Full 2018–2025 earnings experiment — 2026-11-08
+
+The [executed full-history report](full-history-earnings-experiment-2026-11-08.md)
+verifies 64 issuer/SEC quarterly pairs and independently reconciles 128 GAAP facts.
+A 192-event immutable child is reviewed only under the explicit next-session-close
+research availability proxy; exact public delivery remains unverified. All 96 month
+news queries complete: 35,854 news events and 1,262 literal analyst announcements
+are imported as 16 yearly **unreviewed/incomplete** sources. One blank-headline row
+is quarantined and 68 older publications are explicitly excluded from update windows.
+
+A streamed LLM proposes the exact predeclared earnings-entry gate. Explicit draft
+acceptance/publication, version transcript, journal conclusion and exact candidate
+repeat pass. The outcome is mixed: SGD 29,819.54 baseline versus 23,302.66 candidate,
+with maximum drawdown 32.19% versus 19.49%. All 2018–2025 periods are retained.
+Independent reconstruction checks 8,044 marks, 8,044 decisions, 150 fills and 308
+ledger entries. **339 backend/PostgreSQL and 62 frontend tests pass**, Ruff/build
+pass. Engine 2.0.0 is unchanged. [Visual report](earnings-experiment.html).
+
+The full-history load exposed an automatic API restart and source-catalog UI
+failure in the existing deployment. A metadata-only SQL fix passes 339 backend
+checks and 12 browser assertions in a separate read-only API, with all 230 summaries
+identical and response time 2.44–2.53s instead of 25.23s. It is **not deployed** over
+existing containers. All 58 identities, 11 prior runs and 212 source exports remain;
+57 runtimes are unchanged and the API records one automatic restart. Exact cause
+is unconfirmed. See the report before treating the running source UI as verified.
+
+## Free-source qualification pilot — 2026-11-08
+
+The [executed Congress/analyst/earnings pilot](retail-source-qualification-2026-11-08.md)
+checks all 45 pinned snapshot files and reproduces 10,883 filings/187,288 printed
+rows/182,595 event versions. All 6,234 House IDs match the ten retained annual
+indexes; both reviewed Pelosi PDF hashes and selected facts match. Six rows,
+including Senate HTML/paper samples, remain staging-only: filing-date proxy clocks
+are not promoted to verified public times, and option exercises are not equity buys.
+
+Literal extraction yields 98 article-derived analyst announcements in eight raw
+source revisions. All round-trip through the existing API unreviewed/incomplete;
+independent checks reconcile the headlines, missing priors, clocks and access.
+Two issuer/SEC earnings pairs have verified nominal figures; public clocks,
+consensus and surprise remain unknown. No source is automatically approved and
+no new financial backtest is claimed. Engine 2.0.0 is unchanged.
+
+325 backend/PostgreSQL and 62 frontend tests pass, as do Ruff and frontend build.
+No existing container is rebuilt or restarted; preparation uses disposable
+processes and the existing import path. Seven actual source-UI checks and three
+documentation browser checks pass. The read-only audit confirms all 58 existing
+containers, 11 prior backtests and 11 prior source payloads unchanged. See the report for exact scope and gaps.
+
+[Free Congress dataset assessment](congress-dataset-assessment-2026-11-08.md):
+pinned upstream code and actual manifest are reviewed. It is relevant staging
+material, but its availability clock is filing-day end, not measured retail
+publication. Synthetic checks reproduce timing, ambiguous cross-document merging
+and later-contributor provenance. No broad dataset is imported or qualified.
+Earnings will use issuer investor-relations releases plus original SEC exhibits;
+free analyst work can start from explicit announcements in existing news access.
+Public ratings sites are corroboration candidates, not verified free bulk history.
+
 ## Retail information source pilot — 2026-11-08
 
 The target now explicitly models selected retail feeds; direct Senate access is
